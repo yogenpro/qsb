@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import runpy
 import tempfile
+import tomllib
 import unittest
 from unittest.mock import patch
 
@@ -22,8 +23,9 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn(':sha-'+'a'*40,tags);self.assertIn(':main',tags)
         self.assertNotIn(':latest',tags);git.assert_not_called()
     def test_release_requires_version_and_main_ancestry(self):
-        tags,git=self.tags('refs/tags/v0.2.0')
-        self.assertIn(':v0.2.0',tags);self.assertIn(':latest',tags)
+        version=tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']
+        tags,git=self.tags('refs/tags/v'+version)
+        self.assertIn(':v'+version,tags);self.assertIn(':latest',tags)
         git.assert_called_once_with(['git','merge-base','--is-ancestor','a'*40,'origin/main'],check=True)
         with self.assertRaises(SystemExit):self.tags('refs/tags/v999.0.0')
     def test_untrusted_refs_repositories_and_commits_cannot_publish(self):
