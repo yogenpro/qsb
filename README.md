@@ -19,14 +19,14 @@ before the disk cap is exhausted, without discarding unarchived data.
 ## Container
 
 Images are published at **`ghcr.io/yogenpro/qsb`** for linux/amd64. Release tags are
-`v0.2.1`, with `sha-<full-commit>` tags for exact source revisions. Use a published
+`v0.2.2`, with `sha-<full-commit>` tags for exact source revisions. Use a published
 manifest digest in production; `main` and `latest` are moving convenience tags.
 
 ```sh
 cp config/example.json config/production.json
 # Set the destination bucket/prefix/region and provision the dedicated key file.
 # The bucket in the example is deliberately a placeholder.
-export QSB_IMAGE=ghcr.io/yogenpro/qsb:v0.2.1
+export QSB_IMAGE=ghcr.io/yogenpro/qsb:v0.2.2
 docker compose -f deploy/compose.yaml up -d
 ```
 

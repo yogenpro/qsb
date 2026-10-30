@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 from qsb_capture.storage import Config,SegmentArchive,StorageFull,MiB,disk_usage,file_hash
 from qsb_capture.object_store import S3,ObjectStoreError,validate_scope,signing_headers,CONSOLE_BUCKET_CAPABILITIES
-from qsb_capture.runtime import restore_bundle
+from qsb_capture.runtime import restore_bundle,healthcheck
 
 REF=b'{"currentTradingDate":"2026-10-29","data":[{"Complex_Instrument_Type":"QSB","Complex_Instrument_Subtype":"BOX_SPREAD","Symbols":[{"Complex_Instrument_Id":"T1","Leg_Count":1,"Leg_Data":[{"OSI_Symbol":"SPX   261029C00678000","OSI_ROOT":"SPX","EXPIRE_DATE":"2026-10-29","STRIKE":678.0000,"Leg_Ratio":-1,"BUY_SELL_FLAG":"S"}]}]}]}'
 BOOK=b'{"data":{"bids":[[3,981.9000,""]],"asks":[],"trades":[["15:48:04.592403710",2,981.9000],["15:48:04.592403710",2,981.9000]],"timestamp":"16:07:01"}}'
@@ -69,6 +69,16 @@ class StorageTests(unittest.TestCase):
   with patch('qsb_capture.storage.shutil.disk_usage',return_value=type('D',(),{'free':1})()):
    with self.assertRaises(StorageFull):self.a.save(meta(),BOOK)
   with self.assertRaises(ValueError):self.a.save(meta(),b'x'*(self.c.max_response_bytes+1))
+ def test_empty_published_universe_is_healthy_but_capture_failures_are_not(self):
+  self.a._control('archive-health.json',{'state':'ok'})
+  self.a.health({'state':'empty_reference'})
+  self.assertTrue(healthcheck(self.root,self.c))
+  for state in ('storage_paused','failed','partial'):
+   self.a.health({'state':state})
+   self.assertFalse(healthcheck(self.root,self.c))
+  self.a.health({'state':'empty_reference'})
+  self.a._control('archive-health.json',{'state':'failed'})
+  self.assertFalse(healthcheck(self.root,self.c))
  def test_recover_open_segment_after_unclean_exit(self):
   self.a.save(meta(),BOOK);self.a.db.close();self.a.db=None
   recovered=SegmentArchive(self.root,self.c)

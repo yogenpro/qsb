@@ -6,7 +6,7 @@ Use the public linux/amd64 image `ghcr.io/yogenpro/qsb`. Production deployment
 should select an immutable **registry manifest digest**, for example:
 
 ```
-ghcr.io/yogenpro/qsb:v0.2.1@sha256:MANIFEST_DIGEST
+ghcr.io/yogenpro/qsb:v0.2.2@sha256:MANIFEST_DIGEST
 ```
 
 The publisher records the digest in its GitHub Actions summary. Do not confuse
@@ -30,7 +30,7 @@ Provision:
 Use the deployment procedure appropriate for your infrastructure:
 
 ```sh
-export QSB_IMAGE=ghcr.io/yogenpro/qsb:v0.2.1@sha256:MANIFEST_DIGEST
+export QSB_IMAGE=ghcr.io/yogenpro/qsb:v0.2.2@sha256:MANIFEST_DIGEST
 docker compose -f deploy/compose.yaml config --quiet
 docker compose -f deploy/compose.yaml pull
 docker compose -f deploy/compose.yaml up -d
@@ -156,7 +156,8 @@ docker compose -f deploy/compose.yaml run --rm collector maintain
 ```
 
 Status reports actual/capped bytes, capture health, archive health and last verified
-upload. Stale heartbeats, storage pauses, archive failures and source failures
+upload. A valid empty reference universe is healthy; the availability report still
+records zero symbols, and failed requests or archival failures remain unhealthy. Stale heartbeats, storage pauses, archive failures and source failures
 are visible. Docker does not restart a merely unhealthy container; configure host
 monitoring accordingly. `restart: unless-stopped` handles process failures.
 

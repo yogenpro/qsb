@@ -22,7 +22,8 @@ LOG=logging.getLogger('qsb.runtime')
 def healthcheck(root, config):
     health=json.loads((root/'health.json').read_text())
     age=(dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(health['heartbeat_at'])).total_seconds()
-    if age > max(config.interval_seconds+180,120) or health.get('state') in ('storage_paused','failed','partial','empty_reference'):
+    # A valid empty reference is an observed source state, not a failed collector.
+    if age > max(config.interval_seconds+180,120) or health.get('state') in ('storage_paused','failed','partial'):
         return False
     archive=root/'archive-health.json'
     if archive.exists() and json.loads(archive.read_text()).get('state')=='failed':
