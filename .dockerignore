@@ -1,0 +1,7 @@
+**
+!Dockerfile
+!qsb_capture/
+!qsb_capture/*.py
+!qsb_capture/schema.sql
+!config/
+!config/example.json

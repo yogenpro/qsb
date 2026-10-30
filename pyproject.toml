@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qsb-capture"
+version = "0.2.0"
+description = "Raw-first archive of the public Cboe QSB and CPM book viewer"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+qsb-capture = "qsb_capture.runtime:main"
+qsb-capture-service = "qsb_capture.runtime:main"
+
+[tool.setuptools.package-data]
+qsb_capture = ["schema.sql"]
+
+[tool.setuptools.packages.find]
+include = ["qsb_capture*"]

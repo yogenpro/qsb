@@ -1,0 +1,51 @@
+{
+  "currentTradingDate": "2026-10-29",
+  "data": [
+    {
+      "Complex_Instrument_Type": "QSB",
+      "Complex_Instrument_Subtype": "BOX_SPREAD",
+      "Symbols": [
+        {
+          "Complex_Instrument_Id": "T1",
+          "Leg_Count": 1,
+          "Leg_Data": [
+            {
+              "Leg_Symbol": "L1",
+              "Leg_Ratio": 1,
+              "OSI_Symbol": "TEST  261218C00100000",
+              "LEG_RATIO": 1,
+              "OSI_ROOT": "TEST",
+              "EXPIRE_DATE": "2026-12-18",
+              "CALL_PUT_FLAG": "C",
+              "STRIKE": 100,
+              "BUY_SELL_FLAG": "B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Complex_Instrument_Type": "CPM",
+      "Complex_Instrument_Subtype": "VERT_CALL_SPRD",
+      "Symbols": [
+        {
+          "Complex_Instrument_Id": "U1",
+          "Leg_Count": 1,
+          "Leg_Data": [
+            {
+              "Leg_Symbol": "L1",
+              "Leg_Ratio": 1,
+              "OSI_Symbol": "TEST  261218C00100000",
+              "LEG_RATIO": 1,
+              "OSI_ROOT": "TEST",
+              "EXPIRE_DATE": "2026-12-18",
+              "CALL_PUT_FLAG": "C",
+              "STRIKE": 100,
+              "BUY_SELL_FLAG": "B"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+name: qsb-capture
+services:
+  collector:
+    image: ${QSB_IMAGE:-ghcr.io/yogenpro/qsb:v0.2.0}
+    pull_policy: missing
+    restart: unless-stopped
+    user: "65532:65532"
+    read_only: true
+    init: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    cpus: 1.0
+    pids_limit: 64
+    stop_grace_period: 120s
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    volumes:
+      - /var/lib/qsb-capture:/data
+      - /opt/qsb-capture/config.json:/app/config/collector.json:ro
+      - /etc/qsb-capture/b2.json:/run/secrets/b2.json:ro
+    # Outbound collector only. No published ports, Docker socket, tunnel or host network.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

@@ -1,0 +1,18 @@
+{
+  "storage_bytes": 2147483648,
+  "min_free_bytes": 2147483648,
+  "segment_bytes": 33554432,
+  "segment_seconds": 1800,
+  "cold_seconds": 900,
+  "max_response_bytes": 2097152,
+  "interval_seconds": 300,
+  "rate": 5,
+  "workers": 6,
+  "timeout_seconds": 15,
+  "retries": 2,
+  "s3_endpoint": "https://s3.us-west-004.backblazeb2.com",
+  "s3_region": "us-west-004",
+  "s3_bucket": "your-archive-bucket",
+  "s3_prefix": "qsb/production/",
+  "credentials_file": "/run/secrets/b2.json"
+}
