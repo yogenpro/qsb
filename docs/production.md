@@ -6,7 +6,7 @@ Use the public linux/amd64 image `ghcr.io/yogenpro/qsb`. Production deployment
 should select an immutable **registry manifest digest**, for example:
 
 ```
-ghcr.io/yogenpro/qsb:v0.2.0@sha256:MANIFEST_DIGEST
+ghcr.io/yogenpro/qsb:v0.2.1@sha256:MANIFEST_DIGEST
 ```
 
 The publisher records the digest in its GitHub Actions summary. Do not confuse
@@ -30,7 +30,7 @@ Provision:
 Use the deployment procedure appropriate for your infrastructure:
 
 ```sh
-export QSB_IMAGE=ghcr.io/yogenpro/qsb:v0.2.0@sha256:MANIFEST_DIGEST
+export QSB_IMAGE=ghcr.io/yogenpro/qsb:v0.2.1@sha256:MANIFEST_DIGEST
 docker compose -f deploy/compose.yaml config --quiet
 docker compose -f deploy/compose.yaml pull
 docker compose -f deploy/compose.yaml up -d
@@ -119,12 +119,19 @@ change this substantially. The disk cap does not rely on a compression forecast.
 
 ## Credentials
 
-Provision a dedicated Backblaze file-only key, restricted to exactly one configured
-bucket and the exact configured prefix including its trailing slash. File read and
-write are required. File listing/bucket-name discovery are allowed. Broad prefixes,
-multiple buckets, administration and bucket-settings/lifecycle writes are refused.
-Do not reuse another service's key or substitute a master key.
+The default `b2_capability_profile: "file-only"` requires a key restricted to one
+configured bucket and the exact configured prefix including its trailing slash.
+File read/write are required; file listing and bucket discovery are allowed.
 
+Operators accepting a console Read/Write key can explicitly set
+`"b2_capability_profile": "console-read-write"`. This additionally accepts exactly
+`writeBuckets`, `writeBucketEncryption`, and read/write pairs for bucket lifecycle,
+logging, notifications and replication. These setting permissions are bucket-wide;
+the file prefix does not isolate them. Scope validation logs that fact each time
+it refreshes authorization. Key administration, bucket deletion, retention/hold
+writes, governance bypass, unknown capabilities, broad prefixes and multiple
+buckets remain rejected. The collector itself makes no bucket-setting or lifecycle
+changes under either profile.
 ```json
 {"application_key_id":"DEDICATED_KEY_ID","application_key":"DEDICATED_KEY"}
 ```

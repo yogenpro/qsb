@@ -1,7 +1,7 @@
 name: qsb-capture
 services:
   collector:
-    image: ${QSB_IMAGE:-ghcr.io/yogenpro/qsb:v0.2.0}
+    image: ${QSB_IMAGE:-ghcr.io/yogenpro/qsb:v0.2.1}
     pull_policy: missing
     restart: unless-stopped
     user: "65532:65532"

@@ -6,12 +6,19 @@ import hashlib
 import hmac
 import http.client
 import json
+import logging
 import os
 from pathlib import Path
 import stat
 import urllib.parse
 
 EMPTY = hashlib.sha256(b'').hexdigest()
+LOG = logging.getLogger('qsb.object_store')
+FILE_CAPABILITIES = frozenset({'listBuckets','listAllBucketNames','readBuckets','listFiles',
+    'readFiles','writeFiles','deleteFiles','shareFiles','readBucketEncryption'})
+CONSOLE_BUCKET_CAPABILITIES = frozenset({'writeBuckets','writeBucketEncryption',
+    'readBucketLifecycleRules','writeBucketLifecycleRules','readBucketLogging','writeBucketLogging',
+    'readBucketNotifications','writeBucketNotifications','readBucketReplications','writeBucketReplications'})
 
 class ObjectStoreError(RuntimeError):
     pass
@@ -45,12 +52,16 @@ def validate_scope(document, config):
     if allowed.get('namePrefix') != config.s3_prefix:
         raise ObjectStoreError('B2 key must be restricted to exactly the configured prefix, including trailing slash')
     caps=set(allowed.get('capabilities',[]))
-    accepted={'listBuckets','listAllBucketNames','readBuckets','listFiles','readFiles','writeFiles',
-              'deleteFiles','shareFiles','readBucketEncryption'}
+    profile=config.b2_capability_profile
+    if profile not in ('file-only','console-read-write'):
+        raise ObjectStoreError('unknown B2 capability profile')
+    accepted=FILE_CAPABILITIES | (CONSOLE_BUCKET_CAPABILITIES if profile=='console-read-write' else frozenset())
     if not {'readFiles','writeFiles'} <= caps or caps-accepted:
-        raise ObjectStoreError('B2 key needs file read/write capabilities and must not have administrative/bucket-setting capabilities')
+        raise ObjectStoreError('B2 key lacks required file rights or exceeds the selected capability profile')
     if storage.get('s3ApiUrl','').rstrip('/') != config.s3_endpoint.rstrip('/'):
         raise ObjectStoreError('B2 authorization reports a different S3 endpoint')
+    if profile=='console-read-write':
+        LOG.warning('console-read-write B2 profile accepted: bucket-setting privileges are bucket-wide, not prefix-isolated')
 
 
 class S3:

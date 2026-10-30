@@ -11,10 +11,12 @@ import io
 import json
 from pathlib import Path
 import tarfile
+import tomllib
 import urllib.parse
 import urllib.request
 
 ROOT=Path(__file__).resolve().parents[1]
+VERSION=tomllib.loads((ROOT/'pyproject.toml').read_text())['project']['version']
 REGISTRY='https://registry-1.docker.io/v2/library/python/'
 ACCEPT=','.join(['application/vnd.oci.image.index.v1+json','application/vnd.docker.distribution.manifest.list.v2+json',
                 'application/vnd.oci.image.manifest.v1+json','application/vnd.docker.distribution.manifest.v2+json'])
@@ -23,7 +25,7 @@ def sha(data):return 'sha256:'+hashlib.sha256(data).hexdigest()
 def encoded(value):return json.dumps(value,sort_keys=True,separators=(',',':')).encode()
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--resolve-base',action='store_true');p.add_argument('--tag',default='qsb-capture:0.2.0');p.add_argument('--output',type=Path,default=ROOT/'dist/qsb-capture-0.2.0-amd64.tar');args=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--resolve-base',action='store_true');p.add_argument('--tag',default='qsb-capture:'+VERSION);p.add_argument('--output',type=Path,default=ROOT/('dist/qsb-capture-'+VERSION+'-amd64.tar'));args=p.parse_args()
  token=json.load(urllib.request.urlopen('https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/python:pull',timeout=60))['token']
  def fetch(path):
   req=urllib.request.Request(REGISTRY+path,headers={'Authorization':'Bearer '+token,'Accept':ACCEPT})
@@ -78,12 +80,12 @@ def main():
  final=copy.deepcopy(config)
  final['created']='1970-01-01T00:00:00Z'
  final['rootfs']['diff_ids'].append(appid)
- final['history']=final.get('history',[])+[{'created':'1970-01-01T00:00:00Z','created_by':'qsb bounded collector v0.2.0'}]
+ final['history']=final.get('history',[])+[{'created':'1970-01-01T00:00:00Z','created_by':'qsb bounded collector v'+VERSION}]
  final['config'].update({'User':'65532:65532','WorkingDir':'/app','Entrypoint':['python','-m','qsb_capture.runtime'],
   'Cmd':['run'],'StopSignal':'SIGTERM','Healthcheck':{'Test':['CMD','python','-m','qsb_capture.runtime','check-health'],
   'Interval':30000000000,'Timeout':10000000000,'StartPeriod':60000000000,'Retries':3}})
  final['config']['Env']=[e for e in final['config'].get('Env',[]) if not e.startswith(('PYTHONDONTWRITEBYTECODE=','PYTHONUNBUFFERED='))]+['PYTHONDONTWRITEBYTECODE=1','PYTHONUNBUFFERED=1']
- final['config']['Labels']={'org.opencontainers.image.source':'https://github.com/yogenpro/qsb','org.opencontainers.image.title':'Cboe QSB/CPM bounded collector','org.opencontainers.image.version':'0.2.0',
+ final['config']['Labels']={'org.opencontainers.image.source':'https://github.com/yogenpro/qsb','org.opencontainers.image.title':'Cboe QSB/CPM bounded collector','org.opencontainers.image.version':VERSION,
   'org.opencontainers.image.base.digest':lock['digest'],'org.opencontainers.image.revision':appid.split(':')[1]}
  final.pop('container_config',None)
  cfg=encoded(final);cfgname=sha(cfg).split(':')[1]+'.json';applayer=appid.split(':')[1]+'/layer.tar'

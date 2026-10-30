@@ -40,6 +40,7 @@ class Config:
     s3_bucket: str = 'your-archive-bucket'
     s3_prefix: str = 'qsb/production/'
     credentials_file: str = '/run/secrets/b2.json'
+    b2_capability_profile: str = 'file-only'
 
     @classmethod
     def load(cls, path):
@@ -50,6 +51,8 @@ class Config:
         return cls(**obj).validate()
 
     def validate(self):
+        if self.b2_capability_profile not in ('file-only','console-read-write'):
+            raise ValueError('unknown B2 capability profile')
         for name in ('storage_bytes','segment_bytes','segment_seconds','max_response_bytes','workers'):
             value = getattr(self, name)
             if type(value) is not int or value <= 0:

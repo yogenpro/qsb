@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 from qsb_capture.storage import Config,SegmentArchive,StorageFull,MiB,disk_usage,file_hash
-from qsb_capture.object_store import S3,ObjectStoreError,validate_scope,signing_headers
+from qsb_capture.object_store import S3,ObjectStoreError,validate_scope,signing_headers,CONSOLE_BUCKET_CAPABILITIES
 from qsb_capture.runtime import restore_bundle
 
 REF=b'{"currentTradingDate":"2026-10-29","data":[{"Complex_Instrument_Type":"QSB","Complex_Instrument_Subtype":"BOX_SPREAD","Symbols":[{"Complex_Instrument_Id":"T1","Leg_Count":1,"Leg_Data":[{"OSI_Symbol":"SPX   261029C00678000","OSI_ROOT":"SPX","EXPIRE_DATE":"2026-10-29","STRIKE":678.0000,"Leg_Ratio":-1,"BUY_SELL_FLAG":"S"}]}]}]}'
@@ -83,6 +83,24 @@ class StorageTests(unittest.TestCase):
  def test_config_rejects_unreserved_cap_and_bad_prefix(self):
   with self.assertRaises(ValueError):dataclasses.replace(self.c,storage_bytes=MiB).validate()
   with self.assertRaises(ValueError):dataclasses.replace(self.c,s3_prefix='qsb/production').validate()
+  with self.assertRaises(ValueError):dataclasses.replace(self.c,b2_capability_profile='unrestricted').validate()
+ def test_console_profile_accepts_only_the_finite_console_ceiling(self):
+  c=dataclasses.replace(self.c,b2_capability_profile='console-read-write').validate()
+  doc={'apiInfo':{'storageApi':{'s3ApiUrl':c.s3_endpoint,'allowed':{
+   'buckets':[{'id':'id','name':c.s3_bucket}],'namePrefix':c.s3_prefix,
+   'capabilities':['readFiles','writeFiles',*sorted(CONSOLE_BUCKET_CAPABILITIES)]}}}}
+  with self.assertLogs('qsb.object_store',level='WARNING') as logs:validate_scope(doc,c)
+  self.assertIn('bucket-wide',logs.output[0])
+  with self.assertRaises(ObjectStoreError):validate_scope(doc,self.c)
+  for extra in ['listKeys','writeKeys','deleteKeys','deleteBuckets','writeBucketRetentions',
+    'writeFileRetentions','writeFileLegalHolds','bypassGovernance','futureCapability']:
+   bad=json.loads(json.dumps(doc));bad['apiInfo']['storageApi']['allowed']['capabilities'].append(extra)
+   with self.subTest(capability=extra),self.assertRaises(ObjectStoreError):validate_scope(bad,c)
+  for override in [{'namePrefix':'qsb/'},{'buckets':None},
+    {'buckets':[{'id':'id','name':c.s3_bucket},{'id':'other','name':'other'}]},
+    {'buckets':[{'id':'other','name':'other'}]}]:
+   bad=json.loads(json.dumps(doc));bad['apiInfo']['storageApi']['allowed'].update(override)
+   with self.subTest(scope=override),self.assertRaises(ObjectStoreError):validate_scope(bad,c)
  def test_real_collector_uses_bounded_storage_hooks(self):
   from qsb_capture.collector import Collector,REFERENCE
   class H(BaseHTTPRequestHandler):
