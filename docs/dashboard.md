@@ -3,7 +3,8 @@
 The portable frontend is in `dashboard/`. It has its own Node lockfile, build,
 credential-free CI and Cloudflare Worker. Account identity, domains, access rules,
 R2 binding names and native branch-build configuration belong in private `infra`.
-No deployment credential is stored in this public repository or its Actions.
+Cloudflare account/API credentials remain in private infrastructure. Actions receive
+only an encrypted, branch-scoped deploy-hook capability provisioned by private infra.
 
 ## Local development
 
@@ -120,7 +121,9 @@ cache/conditional responses. Static JS/CSS/demo files use static-asset serving d
 
 The generic `wrangler.json` closes workers.dev and preview URLs. It contains no account,
 domain, production bucket or R2 credential. Private infra injects DATA bindings and
-maintains the environment mapping. Native Workers Builds deploy the development branch
-and production branch separately; GitHub Actions only validates the public source.
+maintains the environment mapping. Native Workers Builds deploy the development and production branches separately.
+After validation, trusted main/dev push workflows request their fixed branch build
+through an encrypted deploy hook. Fork/PR workflows cannot deploy; superseded pushes
+are skipped. Hook values and Cloudflare account credentials are never committed.
 Frontend deployment never uploads historical data. The export job publishes data without
 rebuilding the frontend or restarting collection. Access applies to both assets and data.
