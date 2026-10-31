@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qsb-capture"
-version = "0.2.2"
+version = "0.3.0"
 description = "Raw-first archive of the public Cboe QSB and CPM book viewer"
 requires-python = ">=3.10"
 dependencies = []
