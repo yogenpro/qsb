@@ -355,7 +355,9 @@ function App() {
     load<Manifest>("manifest.json", c.signal)
       .then((m) => {
         setManifest(m);
-        setDate(m.days[0]?.date || "");
+        setDate(
+          m.days.find((day) => day.attempts > 0)?.date || m.days[0]?.date || "",
+        );
       })
       .catch((e) => {
         if (e.name !== "AbortError") setError(e.message);

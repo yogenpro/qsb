@@ -12,6 +12,7 @@ import shutil
 import sqlite3
 import stat
 import tempfile
+import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 
@@ -141,6 +142,8 @@ def sync(config,root,now=None,export_only=False):
     state_path=root/'sync-state.json'
     state=load_json(state_path) if state_path.exists() else {'schema_version':1,'dates':{}}
     output=root/'published'
+    published=load_json(output/'manifest.json') if (output/'manifest.json').exists() else {'days':[]}
+    local_days={day['date']:day for day in published['days']}
     dates=set(grouped)
     dates.update((dt.date.fromisoformat(d)+dt.timedelta(days=1)).isoformat() for d in grouped)
     # Today's empty period also drives detail expiry even when endpoints are shut.
@@ -154,12 +157,22 @@ def sync(config,root,now=None,export_only=False):
         cutoff=(now.date()-dt.timedelta(days=int(config.get('detail_days',14))-1)).isoformat()
         expected={'fingerprint':fingerprint,'detail':date>=cutoff}
         if state['dates'].get(date)==expected:continue
+        local=local_days.get(date)
+        if local and local['has_detail']==expected['detail'] and load_json(output/local['path']).get('source_fingerprint')==fingerprint:
+            state['dates'][date]=expected
+            continue
         with tempfile.TemporaryDirectory(prefix='inputs-',dir=root) as temporary:
             def paths():
                 for item in items:
                     if item['size']>2*segment_cap:raise StorageFull('archive exceeds reserved input ceiling')
                     bundle=Path(temporary)/'input.tar.gz';database=Path(temporary)/'input.sealed.sqlite3'
-                    with bundle.open('wb') as stream:source.verify(item['key'],item['size'],item['sha'],destination=stream)
+                    for attempt in range(3):
+                        try:
+                            with bundle.open('wb') as stream:source.verify(item['key'],item['size'],item['sha'],destination=stream)
+                            break
+                        except (OSError,ObjectStoreError):
+                            if attempt==2:raise
+                            time.sleep(2**attempt)
                     restore_bundle(bundle,database,segment_cap)
                     try:yield database
                     finally:
