@@ -83,7 +83,10 @@ export async function load<T>(path: string, signal?: AbortSignal): Promise<T> {
     !/^objects\/[a-f0-9]{64}\.json(?:\.gz)?$/.test(path)
   )
     throw new Error("Invalid data path");
-  const response = await fetch(base + path, { signal });
+  // Bypass immutable responses cached before the Worker gzip pass-through fix.
+  const response = await fetch(base + path + (path.endsWith(".gz") ? "?v=2" : ""), {
+    signal,
+  });
   if (!response.ok)
     throw new Error(
       response.status === 503

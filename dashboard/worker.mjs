@@ -35,6 +35,8 @@ export default {
       headers.set("Content-Length", String(object.size));
       return new Response(request.method === "HEAD" ? null : object.body, {
         headers,
+        // R2 stores the gzip representation; prevent Workers compressing it again.
+        encodeBody: "manual",
       });
     } catch {
       return Response.json(
