@@ -55,7 +55,7 @@ test("manifest revalidates quickly and conditional requests return 304", async (
     DATA: { get: async () => ({ httpEtag: '"abc"', size: 0 }) },
   });
   assert.equal(r.status, 304);
-  assert.equal(r.headers.get("cache-control"), "public, max-age=60");
+  assert.equal(r.headers.get("cache-control"), "private, max-age=60");
 });
 test("object-store failures do not expose exception text", async () => {
   const r = await worker.fetch(req("/data/manifest.json"), {

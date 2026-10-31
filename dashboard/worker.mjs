@@ -25,8 +25,8 @@ export default {
         "X-Content-Type-Options": "nosniff",
         "Cache-Control":
           key === "manifest.json"
-            ? "public, max-age=60"
-            : "public, max-age=31536000, immutable",
+            ? "private, max-age=60"
+            : "private, max-age=31536000, immutable",
         ETag: object.httpEtag,
       });
       if (key.endsWith(".gz")) headers.set("Content-Encoding", "gzip");

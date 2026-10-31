@@ -175,7 +175,7 @@ Python collector/exporter in `qsb_capture/`. Document the versioned export contr
 and maintain small synthetic fixtures shared by exporter validation and frontend
 development; never commit captured history to frontend assets or source control.
 
-This is an assistant recommendation, pending the user's choice. A single repository
+The user accepted this repository layout on 2026-10-31. A single repository
 allows exporter/schema/UI changes to be reviewed together. Frontend and collector
 still build and deploy independently: dashboard-only changes should not publish a
 new collector image, and collector-only changes should not deploy the frontend.
