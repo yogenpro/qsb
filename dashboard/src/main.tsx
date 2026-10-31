@@ -13,6 +13,7 @@ import {
   type Observation,
   type Level,
 } from "./data";
+import { hourlySlots } from "./hours";
 import "./style.css";
 
 function Stat({
@@ -33,9 +34,9 @@ function Stat({
   );
 }
 function Chart({ instrument }: { instrument: Instrument }) {
-  const points = instrument.hourly;
+  const points = hourlySlots(instrument.hourly);
   const values = points
-    .flatMap((p) => [p.bid_min, p.bid_max, p.ask_min, p.ask_max])
+    .flatMap((p) => (p ? [p.bid_min, p.bid_max, p.ask_min, p.ask_max] : []))
     .filter((v) => v !== null)
     .map(Number)
     .filter(Number.isFinite);
@@ -67,35 +68,37 @@ function Chart({ instrument }: { instrument: Instrument }) {
           </text>
         </g>
       ))}
-      {points.map((p, i) => (
-        <g key={p.at}>
-          <title>
-            {p.at}: {p.valid}/{p.attempts} valid; bid {price(p.bid_min)}–
-            {price(p.bid_max)}, ask {price(p.ask_min)}–{price(p.ask_max)}
-          </title>
-          {p.bid_min !== null && (
-            <line
-              className="bid-range"
-              x1={x(i) - 3}
-              x2={x(i) - 3}
-              y1={y(Number(p.bid_max))}
-              y2={y(Number(p.bid_min))}
-            />
-          )}
-          {p.ask_min !== null && (
-            <line
-              className="ask-range"
-              x1={x(i) + 3}
-              x2={x(i) + 3}
-              y1={y(Number(p.ask_max))}
-              y2={y(Number(p.ask_min))}
-            />
-          )}
-          <text x={x(i)} y="175" textAnchor="middle">
-            {p.at.slice(11, 16)}
-          </text>
-        </g>
-      ))}
+      {points.map((p, i) =>
+        p ? (
+          <g key={p.at}>
+            <title>
+              {p.at}: {p.valid}/{p.attempts} valid; bid {price(p.bid_min)}–
+              {price(p.bid_max)}, ask {price(p.ask_min)}–{price(p.ask_max)}
+            </title>
+            {p.bid_min !== null && (
+              <line
+                className="bid-range"
+                x1={x(i) - 3}
+                x2={x(i) - 3}
+                y1={y(Number(p.bid_max))}
+                y2={y(Number(p.bid_min))}
+              />
+            )}
+            {p.ask_min !== null && (
+              <line
+                className="ask-range"
+                x1={x(i) + 3}
+                x2={x(i) + 3}
+                y1={y(Number(p.ask_max))}
+                y2={y(Number(p.ask_min))}
+              />
+            )}
+            <text x={x(i)} y="175" textAnchor="middle">
+              {p.at.slice(11, 16)}
+            </text>
+          </g>
+        ) : null,
+      )}
     </svg>
   );
 }
@@ -662,19 +665,27 @@ function App() {
                           </span>
                         </div>
                         <div className="coverage-track">
-                          {instrument.hourly.map((h) => (
-                            <div
-                              key={h.at}
-                              title={`${h.at}: ${h.valid}/${h.attempts} valid, ${h.nonempty} quoted`}
-                              style={{
-                                background:
-                                  h.valid === h.attempts
-                                    ? "#237e6e"
-                                    : "#b77037",
-                                opacity: 0.3 + (0.7 * h.valid) / h.attempts,
-                              }}
-                            />
-                          ))}
+                          {hourlySlots(instrument.hourly).map((h, i) =>
+                            h ? (
+                              <div
+                                key={h.at}
+                                title={`${h.at}: ${h.valid}/${h.attempts} valid, ${h.nonempty} quoted`}
+                                style={{
+                                  background:
+                                    h.valid === h.attempts
+                                      ? "#237e6e"
+                                      : "#b77037",
+                                  opacity: 0.3 + (0.7 * h.valid) / h.attempts,
+                                }}
+                              />
+                            ) : (
+                              <div
+                                key={`gap-${i}`}
+                                className="coverage-gap"
+                                title="No attempts recorded in this UTC hour"
+                              />
+                            ),
+                          )}
                         </div>
                         <div className="coverage-labels">
                           <span>
