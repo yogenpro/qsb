@@ -808,3 +808,12 @@ footer p:last-child {
     scroll-behavior: auto;
   }
 }
+.coverage-gap {
+  background: repeating-linear-gradient(
+    45deg,
+    #edf0e9,
+    #edf0e9 3px,
+    #d7dfd0 3px,
+    #d7dfd0 5px
+  );
+}
