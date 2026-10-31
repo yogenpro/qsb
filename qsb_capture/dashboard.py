@@ -9,6 +9,7 @@ import datetime as dt
 from decimal import Decimal
 import gzip
 import hashlib
+from functools import lru_cache
 import json
 from pathlib import Path
 import shutil
@@ -101,8 +102,9 @@ def ingest(db, paths, date):
       CREATE TABLE samples(id TEXT PRIMARY KEY,instrument TEXT,at TEXT,data TEXT);
       CREATE INDEX by_instrument ON samples(instrument,at,id);
       CREATE TABLE instruments(id TEXT PRIMARY KEY,data TEXT);
-      CREATE TABLE contexts(sweep TEXT,type TEXT,symbol TEXT,instrument TEXT,data TEXT,
+      CREATE TABLE contexts(sweep TEXT,type TEXT,symbol TEXT,instrument TEXT,
         PRIMARY KEY(sweep,type,symbol));
+      CREATE TABLE states(id TEXT PRIMARY KEY,data TEXT);
     ''')
     # Failed attempts have no normalized observation. Resolve definitions only from
     # their own sweep's published reference, never from a later instrument version.
@@ -119,8 +121,9 @@ def ingest(db, paths, date):
                             ident = hashlib.sha256(canonical([reference['currentTradingDate'],typ,symbol,definition]).encode()).hexdigest()
                             info = {'id':ident,'symbol':symbol,'type':typ,'subtype':group['Complex_Instrument_Subtype'],
                               'trading_date':reference['currentTradingDate'],'definition':definition}
-                            db.execute('INSERT OR IGNORE INTO contexts VALUES (?,?,?,?,?)',
-                              (sweep,typ,symbol,ident,canonical(info)))
+                            db.execute('INSERT OR IGNORE INTO instruments VALUES (?,?)',(ident,canonical(info)))
+                            db.execute('INSERT OR IGNORE INTO contexts VALUES (?,?,?,?)',
+                              (sweep,typ,symbol,ident))
                 except (ValueError,KeyError,TypeError):
                     continue
             # Joins use normalized states, preserving decimal strings and ordered trades.
@@ -143,11 +146,17 @@ def ingest(db, paths, date):
                   'http_status':row['status'],'status':('nonempty' if any(depth) else 'empty') if good else 'failed',
                   'depth':depth,'trades':trades,
                   'error': next((str(meta[k])[:160] for k in ('normalization_error','parse_error','error') if meta.get(k)),None)}
+                if good:
+                    for key,value in (('depth',depth),('trades',trades)):
+                        encoded=canonical(value)
+                        state_id=hashlib.sha256(encoded.encode()).hexdigest()
+                        db.execute('INSERT OR IGNORE INTO states VALUES (?,?)',(state_id,encoded))
+                        sample[key]=state_id
                 definition = json.loads(row['definition_json']) if row['definition_json'] else {}
                 info = {'id':ident,'symbol':row['symbol'],'type':row['type'],'subtype':row['subtype'] or 'Unknown',
                   'trading_date':row['trading_date'],'definition':definition}
                 if row['instrument_id'] is None:
-                    context = db.execute('SELECT instrument,data FROM contexts WHERE sweep=? AND type=? AND symbol=?',
+                    context = db.execute('SELECT c.instrument,i.data FROM contexts c JOIN instruments i ON i.id=c.instrument WHERE c.sweep=? AND c.type=? AND c.symbol=?',
                       (row['sweep'],row['type'],row['symbol'])).fetchone()
                     if context:
                         ident, encoded = context
@@ -173,6 +182,9 @@ def summary_and_parts(db, ident, output, details):
     hours, parts, samples = {}, [], []
     states, trades = {}, {}
     first = last = prior_depth = prior_trades = None
+    @lru_cache(maxsize=128)
+    def state(key):
+        return json.loads(db.execute('SELECT data FROM states WHERE id=?',(key,)).fetchone()[0])
     for raw, in db.execute('SELECT data FROM samples WHERE instrument=? ORDER BY at,id',(ident,)):
         sample = json.loads(raw)
         first = first or sample['at']; last = sample['at']
@@ -184,9 +196,8 @@ def summary_and_parts(db, ident, output, details):
         bucket = hours.setdefault(hour,{'at':hour,'attempts':0,'valid':0,'nonempty':0,'bid_min':None,'bid_max':None,'ask_min':None,'ask_max':None})
         bucket['attempts'] += 1; bucket['valid'] += good; bucket['nonempty'] += sample['status']=='nonempty'
         if good:
-            depth, window = sample.pop('depth'), sample.pop('trades')
-            depth_id = hashlib.sha256(canonical(depth).encode()).hexdigest()
-            trade_id = hashlib.sha256(canonical(window).encode()).hexdigest()
+            depth_id,trade_id = sample.pop('depth'),sample.pop('trades')
+            depth,window = state(depth_id),state(trade_id)
             stats['depth_changes'] += prior_depth is not None and prior_depth != depth_id
             stats['trade_window_changes'] += prior_trades is not None and prior_trades != trade_id
             prior_depth, prior_trades = depth_id, trade_id
@@ -253,7 +264,7 @@ def export_day(paths, root, date, *, as_of=None, detail_days=14, max_output_byte
             db.execute('PRAGMA max_page_count='+str(max_workspace_bytes//4096))
             count = ingest(db,path_factory() if path_factory else paths,date)
             instruments = [summary_and_parts(db,row[0],output,date>=cutoff)
-              for row in db.execute('SELECT id FROM instruments ORDER BY id')]
+              for row in db.execute('SELECT DISTINCT instrument FROM samples ORDER BY instrument')]
         finally:
             db.close()
     # Prune recent-detail references from old daily indexes, preserving summaries.
