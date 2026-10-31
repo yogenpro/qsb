@@ -19,3 +19,6 @@ docs/storage-measurement.json
 config/*.json
 !config/example.json
 data/
+node_modules/
+.wrangler/
+dashboard/test-results/

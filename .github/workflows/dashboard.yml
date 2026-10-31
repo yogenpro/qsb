@@ -1,0 +1,43 @@
+name: Dashboard checks
+on:
+  push:
+    branches: [main, dev]
+    paths: ['dashboard/**', 'qsb_capture/dashboard*.py', 'scripts/dashboard-demo.py', 'tests/test_dashboard*.py', '.github/workflows/dashboard.yml']
+  pull_request:
+    paths: ['dashboard/**', 'qsb_capture/dashboard*.py', 'scripts/dashboard-demo.py', 'tests/test_dashboard*.py', '.github/workflows/dashboard.yml']
+permissions:
+  contents: read
+jobs:
+  dashboard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Verify exporter
+        run: python3 -m unittest discover -s tests -v
+      - name: Generate synthetic browser fixtures
+        run: python3 scripts/dashboard-demo.py
+      - name: Build and test portable frontend
+        run: |
+          npm --prefix dashboard ci
+          npm --prefix dashboard test
+          npm --prefix dashboard run build
+      - name: Browser smoke test
+        working-directory: dashboard
+        run: |
+          npx playwright install --with-deps chromium
+          npm run preview -- --port 4173 > /tmp/qsb-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run test:browser
