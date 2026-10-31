@@ -1,0 +1,31 @@
+{
+  "name": "qsb-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test scripts/*.test.mjs",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env prod"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "playwright": "1.62.1",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "wrangler": "4.156.0"
+  }
+}

@@ -88,3 +88,12 @@ recorded separately. An advancing server timestamp alone does not prove trading.
 The [historical dashboard design](docs/dashboard-design.md) is deferred.
 
 Source viewer: [Cboe quoted spread book reference data](https://www.cboe.com/markets/us/options/trading/quoted-spread-book/reference-data).
+
+## Historical dashboard
+
+The static React/TypeScript frontend lives in `dashboard/`, with an independent
+build and CI workflow. Recent detailed replay and permanent hourly summaries are
+materialized by a separate, bounded Python export job. Cloudflare account/domain,
+access and deployment settings stay in private infrastructure configuration.
+See [dashboard development and data contract](docs/dashboard.md) and the
+[design](docs/dashboard-design.md).
