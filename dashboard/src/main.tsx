@@ -63,7 +63,13 @@ function Chart({ instrument }: { instrument: Instrument }) {
     padding = (hi - lo) * 0.15 || 1;
   const y = (n: number) =>
     142 - ((n - lo + padding) / (hi - lo + 2 * padding)) * 116;
-  const x = (i: number) => 60 + ((i + 0.5) * 680) / points.length;
+  const ticks = [lo, lo + (hi - lo) / 2, hi];
+  const left = Math.max(
+    100,
+    ...ticks.map((v) => v.toFixed(2).length * 10 + 12),
+  );
+  const width = 740 - left;
+  const x = (i: number) => left + ((i + 0.5) * width) / points.length;
   const first = Date.parse(instrument.hourly[0].at);
   const bands: { start: number; end: number; regular: boolean }[] = [];
   for (let i = 0; i < points.length * 4; i++) {
@@ -85,9 +91,9 @@ function Chart({ instrument }: { instrument: Instrument }) {
       {bands.map((b) => (
         <rect
           key={b.start}
-          x={60 + (b.start * 680) / (points.length * 4)}
+          x={left + (b.start * width) / (points.length * 4)}
           y="10"
-          width={((b.end - b.start) * 680) / (points.length * 4)}
+          width={((b.end - b.start) * width) / (points.length * 4)}
           height="145"
           className={b.regular ? "session-regular" : "session-extended"}
         >
@@ -100,10 +106,16 @@ function Chart({ instrument }: { instrument: Instrument }) {
           </title>
         </rect>
       ))}
-      {[lo, lo + (hi - lo) / 2, hi].map((v, i) => (
+      {ticks.map((v, i) => (
         <g key={i}>
-          <line x1="58" x2="755" y1={y(v)} y2={y(v)} className="gridline" />
-          <text x="48" y={y(v) + 4} textAnchor="end">
+          <line
+            x1={left - 2}
+            x2="755"
+            y1={y(v)}
+            y2={y(v)}
+            className="gridline"
+          />
+          <text x={left - 12} y={y(v) + 4} textAnchor="end">
             {v.toFixed(2)}
           </text>
         </g>
@@ -140,7 +152,7 @@ function Chart({ instrument }: { instrument: Instrument }) {
         i % (points.length > 14 ? 2 : 1) === 0 || i === points.length ? (
           <text
             key={i}
-            x={60 + (i * 680) / points.length}
+            x={left + (i * width) / points.length}
             y="175"
             textAnchor="middle"
           >
