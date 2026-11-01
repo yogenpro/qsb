@@ -18,7 +18,9 @@ def make_demo(output):
             return dict(id=ident,sweep='synthetic',kind=kind,symbol=symbol,type=typ,started_at=stamp,finished_at=stamp,status=status)
         reference={'currentTradingDate':'2026-10-29','data':[]}
         for typ,symbol,subtype in [('QSB','DEMO-BOX','BOX_SPREAD'),('CPM','DEMO-CONDOR','IRON_CONDOR')]:
-            legs=[dict(OSI_Symbol=f'DEMO  261030C00{100+i:03}000',OSI_ROOT='DEMO',EXPIRE_DATE='2026-10-30',STRIKE=str(100+i*5)+'.0000',Leg_Ratio='1' if i%2 else '-1',BUY_SELL_FLAG='B' if i%2 else 'S') for i in range(4)]
+            expiry='2026-10-30' if typ=='QSB' else '2026-11-06'
+            osi_date='261030' if typ=='QSB' else '261106'
+            legs=[dict(OSI_Symbol=f'DEMO  {osi_date}C00{100+i:03}000',OSI_ROOT='DEMO',EXPIRE_DATE=expiry,STRIKE=str(100+i*5)+'.0000',Leg_Ratio='1' if i%2 else '-1',BUY_SELL_FLAG='B' if i%2 else 'S') for i in range(4)]
             reference['data'].append(dict(Complex_Instrument_Type=typ,Complex_Instrument_Subtype=subtype,Symbols=[dict(Complex_Instrument_Id=symbol,Leg_Count=4,Leg_Data=legs)]))
         archive.save(meta('demo-reference','reference'),json.dumps(reference).encode())
         for typ,symbol in [('QSB','DEMO-BOX'),('CPM','DEMO-CONDOR')]:

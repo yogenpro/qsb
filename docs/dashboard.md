@@ -62,6 +62,11 @@ SPXW legs at 16:00; other roots use 16:00. Extended/outside-regular shading desc
 collection time, not a claim that the specific instrument was trading then. Source
 clocks without timezone information stay labeled as published. Leg strikes and
 expiry dates appear in the selector and participate in search without rounding.
+The Instruments picker combines book (QSB/CPM), strategy type, expiration date,
+and text search. Expiration matches any included leg; choices follow the selected
+book and strategy. Changing book or collection date resets strategy/expiration,
+and Clear filters resets every picker control. The larger picker text has a wider
+sidebar; charts scroll horizontally on narrow screens to keep axis labels readable.
 
 Schema version 1:
 
