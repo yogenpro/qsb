@@ -14,7 +14,7 @@ def make_demo(output):
     with tempfile.TemporaryDirectory() as tmp:
         archive=SegmentArchive(Path(tmp)/'capture',Config(storage_bytes=32*MiB,segment_bytes=2*MiB,max_response_bytes=128*1024,min_free_bytes=0))
         def meta(ident,kind='depth',symbol='DEMO-BOX',typ='QSB',minute=0,status=200):
-            stamp=f'2026-10-29T{14+minute//60:02}:{minute%60:02}:00+00:00'
+            stamp=f'2026-10-29T{12+minute//60:02}:{minute%60:02}:00+00:00'
             return dict(id=ident,sweep='synthetic',kind=kind,symbol=symbol,type=typ,started_at=stamp,finished_at=stamp,status=status)
         reference={'currentTradingDate':'2026-10-29','data':[]}
         for typ,symbol,subtype in [('QSB','DEMO-BOX','BOX_SPREAD'),('CPM','DEMO-CONDOR','IRON_CONDOR')]:

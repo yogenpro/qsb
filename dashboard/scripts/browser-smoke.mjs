@@ -14,6 +14,15 @@ try {
     .getByRole("heading", { name: "Book replay", exact: true })
     .waitFor();
   await page.getByText("Quoted book", { exact: true }).waitFor();
+  await page.getByLabel("COLLECTION DATE · EASTERN TIME").waitFor();
+  await page.getByText("08:00:00 EDT", { exact: true }).waitFor();
+  assert.ok(await page.locator(".session-regular").count());
+  assert.ok(await page.locator(".session-extended").count());
+  await page.getByLabel("Search instruments").fill("100.0000");
+  const legList = page.getByLabel("DEMO-BOX legs");
+  assert.match(await legList.innerText(), /100\.0000.*2026-10-30/);
+  await page.getByLabel("Search instruments").fill("2026-10-30");
+  assert.equal(await page.locator("button.instrument").count(), 2);
   await page.getByLabel("Search instruments").fill("CONDOR");
   await page
     .getByRole("heading", { name: "DEMO-CONDOR", exact: true })
@@ -44,7 +53,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "ok browser: search, replay failure/empty transitions, responsive layout, no runtime errors",
+    "ok browser: Eastern times, session shading, leg strike/expiry search, replay transitions, responsive layout, no runtime errors",
   );
 } finally {
   await browser.close();
