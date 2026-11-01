@@ -46,6 +46,23 @@ separate from reported trading dates. Never pass a live/open database. Archives 
 be restored with the collector's verified bounded restore command; originals remain
 unchanged. The automated synchronizer handles archive discovery and serial restoration.
 
+The dashboard presents **Eastern collection dates** (`America/New_York`, EST/EDT),
+joining at most two adjacent storage indexes and filtering summaries and replay
+at Eastern midnight. It probes the first/last nonempty indexes to bound available
+dates rather than list an empty date at the archive edges. Replay finds overlapping
+chronological partitions with a binary search, then loads the selected partition.
+Only regular-session trading dates appear in the selector; weekends and US options
+RTH holidays are omitted. The calendar follows Cboe's recurring holiday rules, with
+an explicit exceptional-closure list; review it annually against
+[Cboe's calendar](https://www.cboe.com/about/hours/us-options).
+
+Chart backgrounds split at actual session boundaries (including 09:30 and early
+13:00 closes). Known index/ETF classes use a 16:15 regular close, except expiring
+SPXW legs at 16:00; other roots use 16:00. Extended/outside-regular shading describes
+collection time, not a claim that the specific instrument was trading then. Source
+clocks without timezone information stay labeled as published. Leg strikes and
+expiry dates appear in the selector and participate in search without rounding.
+
 Schema version 1:
 
 - `manifest.json`: export timestamp, detail window, and collection dates with paths,

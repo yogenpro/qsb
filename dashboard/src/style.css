@@ -378,6 +378,34 @@ h1 em {
   color: #7a887a;
   gap: 4px;
 }
+.instrument-legs {
+  padding: 0;
+  margin: 7px 0 10px;
+  list-style: none;
+  font-size: 9px;
+  color: #51674f;
+  font-family: ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+.instrument-legs li {
+  margin-top: 3px;
+}
+.session-regular {
+  fill: #e5f1de;
+}
+.session-extended {
+  fill: #f7e9d5;
+}
+.session-legend {
+  margin: 4px 0 9px;
+  flex-wrap: wrap;
+}
+.regular-key:before {
+  background: #a0c78c;
+}
+.extended-key:before {
+  background: #d9b37e;
+}
 .instrument.active {
   background: #edf3e5;
   border-color: #bccfae;

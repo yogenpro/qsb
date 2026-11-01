@@ -14,6 +14,17 @@ import {
   type Level,
 } from "./data";
 import { hourlySlots } from "./hours";
+import {
+  collectionDates,
+  detailPathsForDate,
+  easternIndex,
+  exchangeClock,
+  exchangeDate,
+  exchangeZone,
+  legLabel,
+  regularMinute,
+  sourceDays,
+} from "./exchange";
 import "./style.css";
 
 function Stat({
@@ -53,13 +64,42 @@ function Chart({ instrument }: { instrument: Instrument }) {
   const y = (n: number) =>
     142 - ((n - lo + padding) / (hi - lo + 2 * padding)) * 116;
   const x = (i: number) => 60 + ((i + 0.5) * 680) / points.length;
+  const first = Date.parse(instrument.hourly[0].at);
+  const bands: { start: number; end: number; regular: boolean }[] = [];
+  for (let i = 0; i < points.length * 4; i++) {
+    const regular = regularMinute(
+      first + i * 900000,
+      instrument.definition.Leg_Data || [],
+    );
+    const prior = bands.at(-1);
+    if (prior?.regular === regular) prior.end = i + 1;
+    else bands.push({ start: i, end: i + 1, regular });
+  }
   return (
     <svg
       className="chart"
       viewBox="0 0 800 190"
       role="img"
-      aria-label="Hourly observed best bid and ask ranges in UTC"
+      aria-label="Hourly observed best bid and ask ranges in Eastern Time, shaded by trading session"
     >
+      {bands.map((b) => (
+        <rect
+          key={b.start}
+          x={60 + (b.start * 680) / (points.length * 4)}
+          y="10"
+          width={((b.end - b.start) * 680) / (points.length * 4)}
+          height="145"
+          className={b.regular ? "session-regular" : "session-extended"}
+        >
+          <title>
+            {exchangeClock(first + b.start * 900000)}–
+            {exchangeClock(first + b.end * 900000)} ET ·{" "}
+            {b.regular
+              ? "Regular trading hours"
+              : "Extended / outside regular hours"}
+          </title>
+        </rect>
+      ))}
       {[lo, lo + (hi - lo) / 2, hi].map((v, i) => (
         <g key={i}>
           <line x1="58" x2="755" y1={y(v)} y2={y(v)} className="gridline" />
@@ -72,8 +112,8 @@ function Chart({ instrument }: { instrument: Instrument }) {
         p ? (
           <g key={p.at}>
             <title>
-              {p.at}: {p.valid}/{p.attempts} valid; bid {price(p.bid_min)}–
-              {price(p.bid_max)}, ask {price(p.ask_min)}–{price(p.ask_max)}
+              {time(p.at)}: {p.valid}/{p.attempts} valid; bid {price(p.bid_min)}
+              –{price(p.bid_max)}, ask {price(p.ask_min)}–{price(p.ask_max)}
             </title>
             {p.bid_min !== null && (
               <line
@@ -93,10 +133,19 @@ function Chart({ instrument }: { instrument: Instrument }) {
                 y2={y(Number(p.ask_min))}
               />
             )}
-            <text x={x(i)} y="175" textAnchor="middle">
-              {p.at.slice(11, 16)}
-            </text>
           </g>
+        ) : null,
+      )}
+      {Array.from({ length: points.length + 1 }, (_, i) =>
+        i % (points.length > 14 ? 2 : 1) === 0 || i === points.length ? (
+          <text
+            key={i}
+            x={60 + (i * 680) / points.length}
+            y="175"
+            textAnchor="middle"
+          >
+            {exchangeClock(first + i * 3600000)}
+          </text>
         ) : null,
       )}
     </svg>
@@ -137,8 +186,15 @@ function Ladder({ levels, side }: { levels: Level[]; side: "bid" | "ask" }) {
     </div>
   );
 }
-function Replay({ instrument }: { instrument: Instrument }) {
+function Replay({
+  instrument,
+  date,
+}: {
+  instrument: Instrument;
+  date: string;
+}) {
   const [part, setPart] = useState(0),
+    [parts, setParts] = useState<string[] | null>(null),
     [detail, setDetail] = useState<Detail | null>(null),
     [position, setPosition] = useState(0),
     [playing, setPlaying] = useState(false),
@@ -146,25 +202,41 @@ function Replay({ instrument }: { instrument: Instrument }) {
   useEffect(() => {
     setPart(0);
     setPlaying(false);
-  }, [instrument.id]);
+    setParts(null);
+    setError("");
+    const c = new AbortController();
+    detailPathsForDate(instrument.details, date, (path) =>
+      load<Detail>(path, c.signal),
+    )
+      .then(setParts)
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      });
+    return () => c.abort();
+  }, [instrument, date]);
   useEffect(() => {
     setDetail(null);
     setError("");
     setPosition(0);
     setPlaying(false);
-    if (!instrument.details[part]) return;
+    if (!parts?.[part]) return;
     const controller = new AbortController();
-    load<Detail>(instrument.details[part], controller.signal)
+    load<Detail>(parts[part], controller.signal)
       .then((value) => {
         if (value.instrument_id !== instrument.id)
           throw new Error("Instrument data mismatch");
-        setDetail(value);
+        setDetail({
+          ...value,
+          observations: value.observations.filter(
+            (o) => exchangeDate(o.at) === date,
+          ),
+        });
       })
       .catch((e) => {
         if (e.name !== "AbortError") setError(e.message);
       });
     return () => controller.abort();
-  }, [instrument, part]);
+  }, [instrument, parts, part, date]);
   useEffect(() => {
     if (!playing || !detail) return;
     const id = setInterval(
@@ -213,9 +285,9 @@ function Replay({ instrument }: { instrument: Instrument }) {
             value={part}
             onChange={(e) => setPart(Number(e.target.value))}
           >
-            {instrument.details.map((_, i) => (
+            {(parts || []).map((_, i) => (
               <option key={i} value={i}>
-                {i + 1} / {instrument.details.length}
+                {i + 1} / {parts?.length}
               </option>
             ))}
           </select>
@@ -231,7 +303,7 @@ function Replay({ instrument }: { instrument: Instrument }) {
         <>
           <div className="replay-timing">
             <div>
-              <span className="muted">Collected · UTC</span>
+              <span className="muted">Collected · Eastern Time</span>
               <strong>{time(observation.at)}</strong>
             </div>
             <span className={`badge ${observation.status}`}>
@@ -346,6 +418,7 @@ function Replay({ instrument }: { instrument: Instrument }) {
 }
 function App() {
   const [manifest, setManifest] = useState<Manifest | null>(null),
+    [dates, setDates] = useState<string[]>([]),
     [date, setDate] = useState(""),
     [index, setIndex] = useState<Index | null>(null),
     [error, setError] = useState(""),
@@ -356,11 +429,33 @@ function App() {
   useEffect(() => {
     const c = new AbortController();
     load<Manifest>("manifest.json", c.signal)
-      .then((m) => {
-        setManifest(m);
-        setDate(
-          m.days.find((day) => day.attempts > 0)?.date || m.days[0]?.date || "",
+      .then(async (m) => {
+        const nonempty = m.days
+          .filter((d) => d.attempts > 0)
+          .sort((a, b) => a.date.localeCompare(b.date));
+        const edges = [
+          ...new Set(
+            [nonempty[0]?.path, nonempty.at(-1)?.path].filter(
+              (p): p is string => !!p,
+            ),
+          ),
+        ];
+        const indexes = await Promise.all(
+          edges.map((p) => load<Index>(p, c.signal)),
         );
+        const bounds = indexes
+          .flatMap((i) =>
+            i.instruments.flatMap((s) =>
+              s.hourly.map((h) => exchangeDate(h.at)),
+            ),
+          )
+          .sort();
+        const available = collectionDates(m).filter(
+          (d) => d >= bounds[0] && d <= bounds.at(-1)!,
+        );
+        setManifest(m);
+        setDates(available);
+        setDate(available[0] || "");
       })
       .catch((e) => {
         if (e.name !== "AbortError") setError(e.message);
@@ -373,13 +468,13 @@ function App() {
     setSelected("");
     setError("");
     const c = new AbortController();
-    const day = manifest.days.find((d) => d.date === date);
-    if (day)
-      load<Index>(day.path, c.signal)
-        .then(setIndex)
-        .catch((e) => {
-          if (e.name !== "AbortError") setError(e.message);
-        });
+    Promise.all(
+      sourceDays(manifest, date).map((d) => load<Index>(d.path, c.signal)),
+    )
+      .then((values) => setIndex(easternIndex(values, date)))
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      });
     return () => c.abort();
   }, [date, manifest]);
   const filtered = useMemo(() => {
@@ -392,7 +487,7 @@ function App() {
             [
               i.symbol,
               i.subtype,
-              ...(i.definition.Leg_Data || []).map((l) => l.OSI_ROOT || ""),
+              ...(i.definition.Leg_Data || []).map(legLabel),
             ]
               .join(" ")
               .toLowerCase()
@@ -445,16 +540,16 @@ function App() {
             </p>
           </div>
           <div className="date-control">
-            <label htmlFor="date">COLLECTION DATE · UTC</label>
+            <label htmlFor="date">COLLECTION DATE · EASTERN TIME</label>
             <select
               id="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              disabled={!manifest?.days.length}
+              disabled={!dates.length}
             >
-              {!manifest?.days.length && <option>No dates available</option>}
-              {manifest?.days.map((d) => (
-                <option key={d.date}>{d.date}</option>
+              {!dates.length && <option>No trading dates available</option>}
+              {dates.map((d) => (
+                <option key={d}>{d}</option>
               ))}
             </select>
             <span>Recent replay · lasting summaries</span>
@@ -526,7 +621,7 @@ function App() {
                 <input
                   className="search"
                   aria-label="Search instruments"
-                  placeholder="Search symbol, root, strategy…"
+                  placeholder="Search symbol, strike, expiry…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -542,6 +637,14 @@ function App() {
                         <span className="instrument-type">{i.type}</span>
                       </div>
                       <p>{i.subtype.replaceAll("_", " ").toLowerCase()}</p>
+                      <ul
+                        className="instrument-legs"
+                        aria-label={`${i.symbol} legs`}
+                      >
+                        {(i.definition.Leg_Data || []).map((leg, n) => (
+                          <li key={n}>{legLabel(leg)}</li>
+                        ))}
+                      </ul>
                       <div className="instrument-meta">
                         <span>
                           {[
@@ -600,8 +703,7 @@ function App() {
                       </div>
                       <p className="caption">
                         Definition version {instrument.id.slice(0, 10)} ·
-                        Sampled {time(instrument.first)}–{time(instrument.last)}{" "}
-                        UTC
+                        Eastern collection date {date}
                       </p>
                       <details>
                         <summary>
@@ -652,9 +754,22 @@ function App() {
                         </div>
                       </div>
                       <Chart instrument={instrument} />
+                      <div
+                        className="legend session-legend"
+                        aria-label="Trading sessions"
+                      >
+                        <span className="regular-key">
+                          Regular trading hours
+                        </span>
+                        <span className="extended-key">
+                          Extended / outside regular hours
+                        </span>
+                      </div>
                       <p className="caption">
-                        Hourly min–max of observed best quotes · UTC. Bars do
-                        not imply continuous liquidity.
+                        Hourly min–max of observed best quotes · Eastern Time
+                        (EST/EDT). Shading follows the regular session,
+                        including early closes. Outside-session observations may
+                        contain retained quotes.
                       </p>
                       <div className="coverage">
                         <div className="section-heading">
@@ -669,7 +784,7 @@ function App() {
                             h ? (
                               <div
                                 key={h.at}
-                                title={`${h.at}: ${h.valid}/${h.attempts} valid, ${h.nonempty} quoted`}
+                                title={`${time(h.at)}: ${h.valid}/${h.attempts} valid, ${h.nonempty} quoted`}
                                 style={{
                                   background:
                                     h.valid === h.attempts
@@ -682,7 +797,7 @@ function App() {
                               <div
                                 key={`gap-${i}`}
                                 className="coverage-gap"
-                                title="No attempts recorded in this UTC hour"
+                                title="No attempts recorded in this hour"
                               />
                             ),
                           )}
@@ -693,12 +808,17 @@ function App() {
                             failed · {instrument.nonempty} quoted
                           </span>
                           <span>
-                            {instrument.depth_changes} observed depth changes
+                            {instrument.hourly.length} hours with capture
+                            attempts
                           </span>
                         </div>
                       </div>
                     </section>
-                    <Replay key={instrument.id} instrument={instrument} />
+                    <Replay
+                      key={`${date}-${instrument.id}`}
+                      instrument={instrument}
+                      date={date}
+                    />
                   </>
                 ) : (
                   <section className="panel">
@@ -722,10 +842,12 @@ function App() {
           {manifest && (
             <p>
               Export updated{" "}
-              {new Date(manifest.generated_at).toLocaleString("en-GB", {
-                timeZone: "UTC",
+              {new Date(manifest.generated_at).toLocaleString("en-US", {
+                timeZone: exchangeZone,
+                timeZoneName: "short",
+                hourCycle: "h23",
               })}{" "}
-              UTC · Detail window {manifest.detail_days} days
+              · Detail window {manifest.detail_days} days
             </p>
           )}
         </footer>

@@ -1,4 +1,5 @@
-/** Keep missing UTC hours as empty slots instead of compressing time. */
+import { exchangeDate } from "./exchange.ts";
+/** Keep elapsed hours, including both repeated hours when daylight saving ends. */
 export function hourlySlots<T extends { at: string }>(
   hours: T[],
 ): (T | null)[] {
@@ -9,8 +10,12 @@ export function hourlySlots<T extends { at: string }>(
   const first = Math.min(...entries.map(([at]) => at));
   const last = Math.max(...entries.map(([at]) => at));
   const count = (last - first) / 3600000 + 1;
-  if (!Number.isInteger(count) || count > 24)
-    throw new Error("Summary must cover at most one UTC day");
+  if (
+    !Number.isInteger(count) ||
+    count > 25 ||
+    exchangeDate(first) !== exchangeDate(last)
+  )
+    throw new Error("Summary must cover at most one Eastern calendar day");
   const byTime = new Map(entries);
   return Array.from(
     { length: count },

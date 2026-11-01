@@ -75,7 +75,9 @@ export interface Detail {
   states: Record<string, [Level[], Level[]]>;
   trade_windows: Record<string, Level[]>;
 }
-export const demo = new URLSearchParams(location.search).get("demo") === "1";
+export const demo =
+  typeof location !== "undefined" &&
+  new URLSearchParams(location.search).get("demo") === "1";
 const base = demo ? "/demo-data/" : "/data/";
 export async function load<T>(path: string, signal?: AbortSignal): Promise<T> {
   if (
@@ -84,9 +86,12 @@ export async function load<T>(path: string, signal?: AbortSignal): Promise<T> {
   )
     throw new Error("Invalid data path");
   // Bypass immutable responses cached before the Worker gzip pass-through fix.
-  const response = await fetch(base + path + (path.endsWith(".gz") ? "?v=2" : ""), {
-    signal,
-  });
+  const response = await fetch(
+    base + path + (path.endsWith(".gz") ? "?v=2" : ""),
+    {
+      signal,
+    },
+  );
   if (!response.ok)
     throw new Error(
       response.status === 503
@@ -120,11 +125,13 @@ export async function load<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 export function time(value: string | null | undefined) {
   return value
-    ? new Date(value).toLocaleTimeString("en-GB", {
-        timeZone: "UTC",
+    ? new Date(value).toLocaleTimeString("en-US", {
+        timeZone: "America/New_York",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
+        timeZoneName: "short",
+        hourCycle: "h23",
       })
     : "—";
 }
