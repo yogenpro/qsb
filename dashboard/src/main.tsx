@@ -14,6 +14,7 @@ import {
   type Level,
 } from "./data";
 import { hourlySlots } from "./hours";
+import { expirationDates, filterInstruments, strategyLabel } from "./filters";
 import {
   collectionDates,
   detailPathsForDate,
@@ -21,7 +22,6 @@ import {
   exchangeClock,
   exchangeDate,
   exchangeZone,
-  legLabel,
   regularMinute,
   sourceDays,
 } from "./exchange";
@@ -63,7 +63,13 @@ function Chart({ instrument }: { instrument: Instrument }) {
     padding = (hi - lo) * 0.15 || 1;
   const y = (n: number) =>
     142 - ((n - lo + padding) / (hi - lo + 2 * padding)) * 116;
-  const x = (i: number) => 60 + ((i + 0.5) * 680) / points.length;
+  const ticks = [lo, lo + (hi - lo) / 2, hi];
+  const left = Math.max(
+    100,
+    ...ticks.map((v) => v.toFixed(2).length * 10 + 12),
+  );
+  const width = 740 - left;
+  const x = (i: number) => left + ((i + 0.5) * width) / points.length;
   const first = Date.parse(instrument.hourly[0].at);
   const bands: { start: number; end: number; regular: boolean }[] = [];
   for (let i = 0; i < points.length * 4; i++) {
@@ -85,9 +91,9 @@ function Chart({ instrument }: { instrument: Instrument }) {
       {bands.map((b) => (
         <rect
           key={b.start}
-          x={60 + (b.start * 680) / (points.length * 4)}
+          x={left + (b.start * width) / (points.length * 4)}
           y="10"
-          width={((b.end - b.start) * 680) / (points.length * 4)}
+          width={((b.end - b.start) * width) / (points.length * 4)}
           height="145"
           className={b.regular ? "session-regular" : "session-extended"}
         >
@@ -100,10 +106,16 @@ function Chart({ instrument }: { instrument: Instrument }) {
           </title>
         </rect>
       ))}
-      {[lo, lo + (hi - lo) / 2, hi].map((v, i) => (
+      {ticks.map((v, i) => (
         <g key={i}>
-          <line x1="58" x2="755" y1={y(v)} y2={y(v)} className="gridline" />
-          <text x="48" y={y(v) + 4} textAnchor="end">
+          <line
+            x1={left - 2}
+            x2="755"
+            y1={y(v)}
+            y2={y(v)}
+            className="gridline"
+          />
+          <text x={left - 12} y={y(v) + 4} textAnchor="end">
             {v.toFixed(2)}
           </text>
         </g>
@@ -140,7 +152,7 @@ function Chart({ instrument }: { instrument: Instrument }) {
         i % (points.length > 14 ? 2 : 1) === 0 || i === points.length ? (
           <text
             key={i}
-            x={60 + (i * 680) / points.length}
+            x={left + (i * width) / points.length}
             y="175"
             textAnchor="middle"
           >
@@ -424,6 +436,8 @@ function App() {
     [error, setError] = useState(""),
     [query, setQuery] = useState(""),
     [type, setType] = useState("ALL"),
+    [strategy, setStrategy] = useState("ALL"),
+    [expiry, setExpiry] = useState("ALL"),
     [selected, setSelected] = useState(""),
     [page, setPage] = useState(0);
   useEffect(() => {
@@ -477,27 +491,46 @@ function App() {
       });
     return () => c.abort();
   }, [date, manifest]);
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return (index?.instruments || [])
-      .filter(
-        (i) =>
-          (type === "ALL" || i.type === type) &&
-          (!q ||
-            [
-              i.symbol,
-              i.subtype,
-              ...(i.definition.Leg_Data || []).map(legLabel),
-            ]
-              .join(" ")
-              .toLowerCase()
-              .includes(q)),
-      )
-      .sort(
-        (a, b) => b.nonempty - a.nonempty || a.symbol.localeCompare(b.symbol),
-      );
-  }, [index, query, type]);
-  useEffect(() => setPage(0), [query, type, date]);
+  const bookInstruments = useMemo(
+    () =>
+      (index?.instruments || []).filter(
+        (i) => type === "ALL" || i.type === type,
+      ),
+    [index, type],
+  );
+  const strategies = useMemo(
+    () => [...new Set(bookInstruments.map((i) => i.subtype))].sort(),
+    [bookInstruments],
+  );
+  const expirations = useMemo(
+    () =>
+      [
+        ...new Set(
+          bookInstruments
+            .filter((i) => strategy === "ALL" || i.subtype === strategy)
+            .flatMap(expirationDates),
+        ),
+      ].sort(),
+    [bookInstruments, strategy],
+  );
+  const filtered = useMemo(
+    () =>
+      filterInstruments(
+        index?.instruments || [],
+        type,
+        strategy,
+        expiry,
+        query,
+      ),
+    [index, query, type, strategy, expiry],
+  );
+  useEffect(() => setPage(0), [query, type, strategy, expiry, date]);
+  function clearFilters() {
+    setQuery("");
+    setType("ALL");
+    setStrategy("ALL");
+    setExpiry("ALL");
+  }
   const instrument = filtered.find((i) => i.id === selected) || filtered[0];
   const totals = (index?.instruments || []).reduce(
     (a, i) => ({
@@ -544,7 +577,11 @@ function App() {
             <select
               id="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setStrategy("ALL");
+                setExpiry("ALL");
+              }}
               disabled={!dates.length}
             >
               {!dates.length && <option>No trading dates available</option>}
@@ -612,7 +649,11 @@ function App() {
                     <button
                       key={t}
                       aria-pressed={type === t}
-                      onClick={() => setType(t)}
+                      onClick={() => {
+                        setType(t);
+                        setStrategy("ALL");
+                        setExpiry("ALL");
+                      }}
                     >
                       {t === "ALL" ? "All books" : t}
                     </button>
@@ -625,6 +666,52 @@ function App() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
+                <div className="instrument-filters">
+                  <label htmlFor="strategy">Strategy type</label>
+                  <select
+                    id="strategy"
+                    value={strategy}
+                    onChange={(e) => {
+                      setStrategy(e.target.value);
+                      setExpiry("ALL");
+                    }}
+                  >
+                    <option value="ALL">All strategies</option>
+                    {strategies.map((s) => (
+                      <option key={s} value={s}>
+                        {strategyLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                  <label htmlFor="expiry">Expiration date</label>
+                  <select
+                    id="expiry"
+                    value={expiry}
+                    onChange={(e) => setExpiry(e.target.value)}
+                  >
+                    <option value="ALL">All expirations</option>
+                    {expirations.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="caption">
+                    Matches any included leg’s expiration.
+                  </span>
+                  <button
+                    className="clear-filters"
+                    onClick={clearFilters}
+                    disabled={
+                      !query &&
+                      type === "ALL" &&
+                      strategy === "ALL" &&
+                      expiry === "ALL"
+                    }
+                  >
+                    Clear filters
+                  </button>
+                </div>
                 <div className="instrument-list">
                   {filtered.slice(page * 40, (page + 1) * 40).map((i) => (
                     <button
@@ -636,13 +723,21 @@ function App() {
                         <strong>{i.symbol}</strong>
                         <span className="instrument-type">{i.type}</span>
                       </div>
-                      <p>{i.subtype.replaceAll("_", " ").toLowerCase()}</p>
+                      <p>{strategyLabel(i.subtype)}</p>
                       <ul
                         className="instrument-legs"
                         aria-label={`${i.symbol} legs`}
                       >
                         {(i.definition.Leg_Data || []).map((leg, n) => (
-                          <li key={n}>{legLabel(leg)}</li>
+                          <li key={n}>
+                            <span>
+                              {leg.BUY_SELL_FLAG || "?"} {leg.Leg_Ratio ?? "?"}{" "}
+                              · {leg.OSI_ROOT || "?"} · {leg.STRIKE ?? "?"}
+                            </span>
+                            <span className="leg-expiry">
+                              Exp {leg.EXPIRE_DATE || "?"}
+                            </span>
+                          </li>
                         ))}
                       </ul>
                       <div className="instrument-meta">
@@ -753,7 +848,9 @@ function App() {
                           <span className="ask-key">Ask</span>
                         </div>
                       </div>
-                      <Chart instrument={instrument} />
+                      <div className="chart-scroll">
+                        <Chart instrument={instrument} />
+                      </div>
                       <div
                         className="legend session-legend"
                         aria-label="Trading sessions"

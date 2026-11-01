@@ -11,7 +11,7 @@
   background: #f4f5ef;
   font-synthesis: none;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 * {
@@ -62,22 +62,22 @@ p {
   margin: 0;
 }
 h2 {
-  font-size: 20px;
+  font-size: 22px;
   letter-spacing: -0.5px;
   font-weight: 600;
 }
 h3 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 table {
   border-collapse: collapse;
   width: 100%;
   text-align: left;
-  font-size: 12px;
+  font-size: 15px;
 }
 th {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   color: #6f7d76;
   letter-spacing: 0.8px;
@@ -93,7 +93,7 @@ td {
 }
 summary {
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   padding: 12px 0;
 }
@@ -115,7 +115,7 @@ summary span {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.5px;
   color: white;
@@ -138,7 +138,7 @@ summary span {
   font-weight: 300;
 }
 .brand-label {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 2px;
   font-weight: 400;
   color: #b3c8be;
@@ -147,7 +147,7 @@ summary span {
   border-left: 1px solid #47645a;
 }
 .topbar-note {
-  font-size: 11px;
+  font-size: 14px;
   color: #c1d3ca;
   display: flex;
   align-items: center;
@@ -162,7 +162,7 @@ summary span {
 .demo-banner {
   padding: 10px 4vw;
   background: #f7e4bc;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   display: flex;
   gap: 20px;
@@ -182,7 +182,7 @@ main {
   margin: 44px 0 32px;
 }
 .eyebrow {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: 2px;
   color: #738276;
@@ -201,7 +201,7 @@ h1 em {
   letter-spacing: -1.7px;
 }
 .intro p {
-  font-size: 12px;
+  font-size: 15px;
   color: #6f7c71;
 }
 .date-control {
@@ -211,7 +211,7 @@ h1 em {
   min-width: 220px;
 }
 .date-control label {
-  font-size: 9px;
+  font-size: 12px;
   color: #6f7c71;
   letter-spacing: 1.6px;
   font-weight: 600;
@@ -223,10 +223,10 @@ h1 em {
   border-radius: 6px;
   color: #1a3830;
   font-weight: 550;
-  font-size: 14px;
+  font-size: 16px;
 }
 .date-control > span {
-  font-size: 10px;
+  font-size: 13px;
   color: #7a887b;
 }
 .stats {
@@ -250,7 +250,7 @@ h1 em {
 }
 .stat > span {
   color: #718172;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.3px;
 }
 .stat strong {
@@ -262,11 +262,11 @@ h1 em {
 }
 .stat small {
   color: #819080;
-  font-size: 10px;
+  font-size: 13px;
 }
 .workspace {
   display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
+  grid-template-columns: 360px minmax(0, 1fr);
   gap: 22px;
   align-items: start;
 }
@@ -294,7 +294,7 @@ h1 em {
   padding: 0 6px;
 }
 .count {
-  font-size: 11px;
+  font-size: 14px;
   border-radius: 4px;
   background: #edf2e7;
   padding: 2px 7px;
@@ -312,7 +312,7 @@ h1 em {
   flex: 1;
   background: transparent;
   border: 0;
-  font-size: 10px;
+  font-size: 13px;
   padding: 7px 3px;
   color: #6b7d6c;
 }
@@ -328,7 +328,7 @@ h1 em {
   border: 1px solid #dae1d6;
   border-radius: 6px;
   background: #fafbf8;
-  font-size: 11px;
+  font-size: 14px;
   margin-bottom: 12px;
   outline-color: #487a5d;
 }
@@ -354,11 +354,11 @@ h1 em {
 }
 .instrument strong {
   font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-size: 16px;
   letter-spacing: 0.1px;
 }
 .instrument-type {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.7px;
   color: #7f8d7d;
   background: #f0f3ed;
@@ -366,13 +366,13 @@ h1 em {
   border-radius: 3px;
 }
 .instrument p {
-  font-size: 10px;
+  font-size: 13px;
   color: #7a887a;
   text-transform: capitalize;
   margin: 3px 0 8px;
 }
 .instrument-meta {
-  font-size: 9px;
+  font-size: 12px;
   display: flex;
   justify-content: space-between;
   color: #7a887a;
@@ -382,13 +382,50 @@ h1 em {
   padding: 0;
   margin: 7px 0 10px;
   list-style: none;
-  font-size: 9px;
+  font-size: 13px;
   color: #51674f;
   font-family: ui-monospace, monospace;
   overflow-wrap: anywhere;
 }
 .instrument-legs li {
+  margin-top: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.leg-expiry {
+  white-space: nowrap;
+}
+.instrument-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.instrument-filters label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.instrument-filters select {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5c7;
+  border-radius: 6px;
+  background: white;
+  color: inherit;
+}
+.clear-filters {
+  align-self: flex-start;
   margin-top: 3px;
+  font-size: 14px;
+}
+.chart-scroll {
+  overflow-x: auto;
+}
+.chart {
+  min-width: 680px;
 }
 .session-regular {
   fill: #e5f1de;
@@ -422,7 +459,7 @@ h1 em {
   align-items: center;
   justify-content: space-between;
   margin-top: 12px;
-  font-size: 11px;
+  font-size: 14px;
 }
 .detail-column {
   display: flex;
@@ -431,7 +468,7 @@ h1 em {
   min-width: 0;
 }
 .caption {
-  font-size: 10px;
+  font-size: 13px;
   color: #7b887a;
   line-height: 1.6;
 }
@@ -446,7 +483,7 @@ h1 em {
 }
 .badge {
   display: inline-block;
-  font-size: 10px;
+  font-size: 13px;
   padding: 5px 9px;
   border-radius: 20px;
   background: #eff3ea;
@@ -468,7 +505,7 @@ h1 em {
 .legend {
   display: flex;
   gap: 17px;
-  font-size: 10px;
+  font-size: 13px;
   color: #6f7d76;
 }
 .legend span:before {
@@ -492,7 +529,7 @@ h1 em {
   overflow: visible;
 }
 .chart text {
-  font-size: 10px;
+  font-size: 16px;
   fill: #81907f;
   font-family: ui-monospace, monospace;
 }
@@ -520,10 +557,10 @@ h1 em {
   background: #f9faf6;
   border-radius: 6px;
   color: #70806b;
-  font-size: 12px;
+  font-size: 15px;
 }
 .chart-empty span {
-  font-size: 10px;
+  font-size: 13px;
 }
 .coverage {
   border-top: 1px solid #e8ede3;
@@ -531,7 +568,7 @@ h1 em {
   padding-top: 16px;
 }
 .coverage .section-heading {
-  font-size: 10px;
+  font-size: 13px;
   color: #6f7d76;
   margin-bottom: 10px;
 }
@@ -548,7 +585,7 @@ h1 em {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 9px;
+  font-size: 12px;
   color: #81907f;
   margin-top: 8px;
 }
@@ -556,7 +593,7 @@ h1 em {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
+  font-size: 13px;
   color: #738276;
 }
 .part-select select {
@@ -580,10 +617,10 @@ h1 em {
 }
 .muted {
   color: #7a887a;
-  font-size: 11px;
+  font-size: 14px;
 }
 .replay-timing strong {
-  font-size: 20px;
+  font-size: 22px;
   font-family: ui-monospace, monospace;
   font-weight: 500;
 }
@@ -591,7 +628,7 @@ h1 em {
   text-align: right;
 }
 .source-time strong {
-  font-size: 15px;
+  font-size: 17px;
 }
 .scrubber {
   display: flex;
@@ -604,7 +641,7 @@ h1 em {
 }
 .scrubber button {
   padding: 6px 9px;
-  font-size: 10px;
+  font-size: 13px;
   white-space: nowrap;
 }
 .scrubber button:first-child {
@@ -620,7 +657,7 @@ h1 em {
   height: 5px;
 }
 .scrubber > span {
-  font-size: 10px;
+  font-size: 13px;
   color: #7a887a;
   white-space: nowrap;
 }
@@ -645,12 +682,12 @@ h1 em {
   align-items: center;
   padding: 10px 12px;
   background: #f0f6ed;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: #2c7659;
 }
 .ladder-title > span:last-child {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 400;
 }
 .ask .ladder-title {
@@ -692,14 +729,14 @@ h1 em {
 }
 .failure p {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 14px;
 }
 .error {
   background: #fff0e6;
   color: #99542c;
   padding: 12px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 15px;
 }
 .empty-state {
   min-height: 200px;
@@ -713,7 +750,7 @@ h1 em {
   color: #738276;
 }
 .empty-state a {
-  font-size: 12px;
+  font-size: 15px;
 }
 footer {
   border-top: 1px solid #dce4d6;
@@ -722,7 +759,7 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  font-size: 10px;
+  font-size: 13px;
   color: #84907f;
 }
 footer > span {
@@ -733,7 +770,7 @@ footer > span {
   padding: 0 7px;
 }
 footer p:last-child {
-  font-size: 9px;
+  font-size: 12px;
 }
 @media (min-width: 1600px) {
   main {
@@ -742,7 +779,7 @@ footer p:last-child {
 }
 @media (max-width: 1000px) {
   .workspace {
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns: 300px minmax(0, 1fr);
     gap: 15px;
   }
   .panel {
@@ -755,7 +792,7 @@ footer p:last-child {
     flex-wrap: wrap;
   }
   .source-time strong {
-    font-size: 12px;
+    font-size: 15px;
   }
   .stat {
     padding: 0 16px;

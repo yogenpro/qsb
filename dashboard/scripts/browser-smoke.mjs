@@ -18,11 +18,44 @@ try {
   await page.getByText("08:00:00 EDT", { exact: true }).waitFor();
   assert.ok(await page.locator(".session-regular").count());
   assert.ok(await page.locator(".session-extended").count());
+  await page
+    .getByLabel("Strategy type", { exact: true })
+    .selectOption("BOX_SPREAD");
+  assert.equal(await page.locator("button.instrument").count(), 1);
+  assert.deepEqual(await page.locator("#expiry option").allTextContents(), [
+    "All expirations",
+    "2026-10-30",
+  ]);
+  await page.getByLabel("Strategy type", { exact: true }).selectOption("ALL");
+  await page
+    .getByLabel("Expiration date", { exact: true })
+    .selectOption("2026-11-06");
+  await page
+    .getByRole("heading", { name: "DEMO-CONDOR", exact: true })
+    .waitFor();
+  assert.equal(await page.locator("button.instrument").count(), 1);
+  await page.getByLabel("Search instruments").fill("BOX");
+  await page
+    .getByText("No instruments match these filters.", { exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Clear filters", exact: true })
+    .click();
+  assert.equal(await page.locator("button.instrument").count(), 2);
+  await page.getByRole("button", { name: "QSB", exact: true }).click();
+  assert.deepEqual(await page.locator("#strategy option").allTextContents(), [
+    "All strategies",
+    "Box Spread",
+  ]);
+  await page
+    .getByRole("button", { name: "Clear filters", exact: true })
+    .click();
   await page.getByLabel("Search instruments").fill("100.0000");
   const legList = page.getByLabel("DEMO-BOX legs");
-  assert.match(await legList.innerText(), /100\.0000.*2026-10-30/);
+  assert.match(await legList.innerText(), /100\.0000/);
+  assert.match(await legList.innerText(), /2026-10-30/);
   await page.getByLabel("Search instruments").fill("2026-10-30");
-  assert.equal(await page.locator("button.instrument").count(), 2);
+  assert.equal(await page.locator("button.instrument").count(), 1);
   await page.getByLabel("Search instruments").fill("CONDOR");
   await page
     .getByRole("heading", { name: "DEMO-CONDOR", exact: true })
@@ -53,7 +86,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "ok browser: Eastern times, session shading, leg strike/expiry search, replay transitions, responsive layout, no runtime errors",
+    "ok browser: strategy/expiry filters and reset, Eastern times, session shading, leg search, replay, responsive layout, no runtime errors",
   );
 } finally {
   await browser.close();
