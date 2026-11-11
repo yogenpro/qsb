@@ -288,7 +288,7 @@ function Replay({
     <section className="panel replay">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">OBSERVED SNAPSHOTS</span>
+          <span className="eyebrow">Observation history</span>
           <h2>Book replay</h2>
         </div>
         <label className="part-select">
@@ -542,38 +542,41 @@ function App() {
   );
   return (
     <>
+      <a className="skip-link" href="#workspace">
+        Skip to instruments
+      </a>
       <header className="topbar">
         <a href="/" className="brand">
-          <span className="brand-icon">q</span>QSB{" "}
-          <span className="brand-slash">/</span> CPM
-          <span className="brand-label">MARKET ARCHIVE</span>
+          <span className="brand-icon" aria-hidden="true">
+            <i />
+            <i />
+          </span>
+          QSB <span className="brand-slash">/</span> CPM
+          <span className="brand-label">Market archive</span>
         </a>
         <span className="topbar-note">
           Cboe book observations
-          <span className="status-dot" />
+          <span className="archive-label">Historical data</span>
         </span>
       </header>
       {demo && (
         <aside className="demo-banner">
-          SYNTHETIC DEMO · Illustrative instruments and prices.{" "}
+          <strong>Synthetic demo</strong> Illustrative instruments and prices.{" "}
           <a href="/">Return to historical data →</a>
         </aside>
       )}
       <main>
         <div className="intro">
           <div>
-            <span className="eyebrow">THE HISTORICAL RECORD</span>
             <h1>
-              A closer look at
-              <br />
-              <em>the complex book.</em>
+              Explore the complex book<span className="title-period">.</span>
             </h1>
             <p>
               Explore QSB and CPM liquidity, one observed snapshot at a time.
             </p>
           </div>
           <div className="date-control">
-            <label htmlFor="date">COLLECTION DATE · EASTERN TIME</label>
+            <label htmlFor="date">Collection date · Eastern Time</label>
             <select
               id="date"
               value={date}
@@ -614,27 +617,27 @@ function App() {
           <>
             <section className="stats" aria-label="Session summary">
               <Stat
-                label="INSTRUMENTS OBSERVED"
+                label="Instruments observed"
                 value={index.instruments.length.toLocaleString()}
                 note="Versioned definitions"
               />
               <Stat
-                label="CAPTURE ATTEMPTS"
+                label="Capture attempts"
                 value={totals.attempts.toLocaleString()}
                 note="Includes retries and failures"
               />
               <Stat
-                label="VALID RESPONSES"
+                label="Valid responses"
                 value={percent(totals.valid, totals.attempts)}
                 note={`${(totals.attempts - totals.valid).toLocaleString()} failed attempts`}
               />
               <Stat
-                label="QUOTED SAMPLES"
+                label="Quoted samples"
                 value={percent(totals.nonempty, totals.valid)}
                 note="At least one bid or ask"
               />
             </section>
-            <div className="workspace">
+            <div className="workspace" id="workspace" tabIndex={-1}>
               <aside className="panel explorer">
                 <div className="section-heading">
                   <h2>Instruments</h2>
@@ -717,6 +720,7 @@ function App() {
                     <button
                       key={i.id}
                       className={`instrument ${instrument?.id === i.id ? "active" : ""}`}
+                      aria-pressed={instrument?.id === i.id}
                       onClick={() => setSelected(i.id)}
                     >
                       <div>
@@ -730,12 +734,17 @@ function App() {
                       >
                         {(i.definition.Leg_Data || []).map((leg, n) => (
                           <li key={n}>
-                            <span>
-                              {leg.BUY_SELL_FLAG || "?"} {leg.Leg_Ratio ?? "?"}{" "}
-                              · {leg.OSI_ROOT || "?"} · {leg.STRIKE ?? "?"}
+                            <span
+                              className="leg-side"
+                              data-side={leg.BUY_SELL_FLAG}
+                            >
+                              {leg.BUY_SELL_FLAG || "?"} {leg.Leg_Ratio ?? "?"}
+                            </span>
+                            <span className="leg-contract">
+                              {leg.OSI_ROOT || "?"} {leg.STRIKE ?? "?"}
                             </span>
                             <span className="leg-expiry">
-                              Exp {leg.EXPIRE_DATE || "?"}
+                              {leg.EXPIRE_DATE || "?"}
                             </span>
                           </li>
                         ))}
@@ -788,7 +797,7 @@ function App() {
                         <div>
                           <span className="eyebrow">
                             {instrument.type} ·{" "}
-                            {instrument.subtype.replaceAll("_", " ")}
+                            {strategyLabel(instrument.subtype)}
                           </span>
                           <h2>{instrument.symbol}</h2>
                         </div>
@@ -835,11 +844,16 @@ function App() {
                         </div>
                       </details>
                     </section>
-                    <section className="panel">
+                    <Replay
+                      key={`${date}-${instrument.id}`}
+                      instrument={instrument}
+                      date={date}
+                    />
+                    <section className="panel quote-history">
                       <div className="section-heading">
                         <div>
                           <span className="eyebrow">
-                            PERMANENT HOURLY SUMMARY
+                            Permanent hourly summary
                           </span>
                           <h2>Observed quote ranges</h2>
                         </div>
@@ -885,8 +899,8 @@ function App() {
                                 style={{
                                   background:
                                     h.valid === h.attempts
-                                      ? "#237e6e"
-                                      : "#b77037",
+                                      ? "var(--capture-valid)"
+                                      : "var(--capture-warning)",
                                   opacity: 0.3 + (0.7 * h.valid) / h.attempts,
                                 }}
                               />
@@ -911,11 +925,6 @@ function App() {
                         </div>
                       </div>
                     </section>
-                    <Replay
-                      key={`${date}-${instrument.id}`}
-                      instrument={instrument}
-                      date={date}
-                    />
                   </>
                 ) : (
                   <section className="panel">

@@ -1,5 +1,9 @@
 # Historical dashboard
 
+The accepted dashboard design patterns are documented in
+[the design system](../.interface-design/system.md). Read it before changing the
+dashboard's layout, typography, colors, or interaction patterns.
+
 The portable frontend is in `dashboard/`. It has its own Node lockfile, build,
 credential-free CI and Cloudflare Worker. Account identity, domains, access rules,
 R2 binding names and native branch-build configuration belong in private `infra`.
