@@ -14,7 +14,7 @@ try {
     .getByRole("heading", { name: "Book replay", exact: true })
     .waitFor();
   await page.getByText("Quoted book", { exact: true }).waitFor();
-  await page.getByLabel("COLLECTION DATE · EASTERN TIME").waitFor();
+  await page.getByLabel("Collection date · Eastern Time").waitFor();
   await page.getByText("08:00:00 EDT", { exact: true }).waitFor();
   assert.ok(await page.locator(".session-regular").count());
   assert.ok(await page.locator(".session-extended").count());
