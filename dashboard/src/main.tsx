@@ -15,6 +15,7 @@ import {
 } from "./data";
 import { hourlySlots } from "./hours";
 import { expirationDates, filterInstruments, strategyLabel } from "./filters";
+import { CollectionDatePicker } from "./CollectionDatePicker";
 import {
   collectionDates,
   detailPathsForDate,
@@ -575,25 +576,15 @@ function App() {
               Explore QSB and CPM liquidity, one observed snapshot at a time.
             </p>
           </div>
-          <div className="date-control">
-            <label htmlFor="date">Collection date · Eastern Time</label>
-            <select
-              id="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                setStrategy("ALL");
-                setExpiry("ALL");
-              }}
-              disabled={!dates.length}
-            >
-              {!dates.length && <option>No trading dates available</option>}
-              {dates.map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-            <span>Recent replay · lasting summaries</span>
-          </div>
+          <CollectionDatePicker
+            dates={dates}
+            value={date}
+            onChange={(next) => {
+              setDate(next);
+              setStrategy("ALL");
+              setExpiry("ALL");
+            }}
+          />
         </div>
         {error ? (
           <section className="panel empty-state" role="alert">

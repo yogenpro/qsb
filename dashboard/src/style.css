@@ -282,8 +282,9 @@ h1 {
   color: var(--ink-secondary);
   font-size: 13px;
 }
-.date-control select,
+.date-trigger,
 .instrument-filters select,
+.collection-date-popover .rdp-dropdown,
 .search,
 .part-select select {
   min-height: 44px;
@@ -292,14 +293,113 @@ h1 {
   padding: 8px 12px;
   background: var(--control-inset);
 }
-.date-control select {
+.date-trigger {
   grid-column: 2;
   grid-row: 1 / 3;
   font-family: var(--font-data);
   font-size: 15px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.date-trigger svg {
+  flex-shrink: 0;
+  color: var(--ink-secondary);
+}
+.date-trigger[data-state="open"] {
+  border-color: var(--selection-rule);
+  background: var(--selection);
+}
+.date-trigger:disabled {
+  font-family: var(--font-ui);
+  font-size: 13px;
 }
 .date-control > span {
+  color: var(--ink-tertiary);
+  font-size: 12px;
+}
+.collection-date-popover {
+  z-index: 20;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  max-height: var(--radix-popover-content-available-height);
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--book-surface);
+}
+.collection-date-popover .rdp-root {
+  --rdp-accent-color: var(--bid);
+  --rdp-accent-background-color: var(--selection);
+  --rdp-day_button-border-radius: 6px;
+  --rdp-day_button-height: 44px;
+  --rdp-day_button-width: 44px;
+  --rdp-selected-border: 1px solid var(--selection-rule);
+  --rdp-disabled-opacity: 1;
+  --rdp-nav_button-height: 44px;
+  --rdp-nav_button-width: 44px;
+  --rdp-nav-height: 44px;
+  --rdp-dropdown-gap: 8px;
+  font-size: 14px;
+}
+.collection-date-popover .rdp-month_caption {
+  font-size: 14px;
+  font-weight: 400;
+}
+.collection-date-popover .rdp-dropdowns {
+  display: flex;
+  width: 100%;
+}
+.collection-date-popover .rdp-dropdown_root:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.collection-date-popover .rdp-dropdown_root:last-child {
+  flex: 0 0 80px;
+}
+.collection-date-popover .rdp-dropdown {
+  position: static;
+  opacity: 1;
+  appearance: auto;
+}
+.collection-date-popover .rdp-caption_label {
+  display: none;
+}
+.collection-date-popover .rdp-chevron {
+  fill: var(--ink-secondary);
+}
+.collection-date-popover th,
+.collection-date-popover td {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+}
+.collection-date-popover .rdp-weekday {
+  padding-block: 8px;
+  color: var(--ink-tertiary);
+  font-size: 12px;
+  opacity: 1;
+}
+.collection-date-popover .rdp-day_button:disabled {
+  color: var(--ink-disabled);
+  background: none;
+  border-color: transparent;
+}
+.collection-date-popover .rdp-selected .rdp-day_button {
+  color: var(--bid);
+  background: var(--selection);
+  font-size: 14px;
+  font-weight: 650;
+}
+.date-availability {
+  max-width: 308px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
   color: var(--ink-tertiary);
   font-size: 12px;
 }
@@ -981,7 +1081,7 @@ footer p:last-child {
   .date-control {
     grid-template-columns: 1fr;
   }
-  .date-control select {
+  .date-trigger {
     grid-column: 1;
     grid-row: 2;
   }
@@ -1087,7 +1187,7 @@ footer p:last-child {
   .date-control label {
     font-size: 12px;
   }
-  .date-control select {
+  .date-trigger {
     grid-column: 2;
     grid-row: 1;
     width: 156px;
@@ -1216,10 +1316,21 @@ footer p:last-child {
   .date-control {
     grid-template-columns: 1fr;
   }
-  .date-control select {
+  .date-trigger {
     grid-column: 1;
     grid-row: 2;
     width: 100%;
+  }
+  .collection-date-popover .rdp-root {
+    --rdp-day-width: 40px;
+    --rdp-day_button-width: 40px;
+    --rdp-nav_button-width: 40px;
+  }
+  .collection-date-popover .rdp-dropdown {
+    padding-inline: 8px;
+  }
+  .date-availability {
+    max-width: 280px;
   }
   .book-grid {
     grid-template-columns: 1fr;

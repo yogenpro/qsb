@@ -22,7 +22,8 @@ npm --prefix dashboard run dev
 
 Open `http://127.0.0.1:5173/?demo=1` for explicitly synthetic data. Demo fixtures
 are generated through the real exporter, including failures, valid empties and
-repeated trade rows. Without demo mode the app requests `/data/manifest.json`;
+repeated trade rows across October 27–29, 2026, so date selection can be tried.
+Without demo mode the app requests `/data/manifest.json`;
 an absent publication produces a clear unavailable state, never fabricated history.
 
 ```sh
@@ -55,9 +56,11 @@ joining at most two adjacent storage indexes and filtering summaries and replay
 at Eastern midnight. It probes the first/last nonempty indexes to bound available
 dates rather than list an empty date at the archive edges. Replay finds overlapping
 chronological partitions with a binary search, then loads the selected partition.
-Only regular-session trading dates appear in the selector; weekends and US options
-RTH holidays are omitted. The calendar follows Cboe's recurring holiday rules, with
-an explicit exceptional-closure list; review it annually against
+The collection-date calendar supports month/year navigation and keyboard selection.
+Only available regular-session trading dates can be selected; weekends, US options
+RTH holidays and dates outside the archive are disabled. The calendar follows
+Cboe's recurring holiday rules, with an explicit exceptional-closure list;
+review it annually against
 [Cboe's calendar](https://www.cboe.com/about/hours/us-options).
 
 Chart backgrounds split at actual session boundaries (including 09:30 and early

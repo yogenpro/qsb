@@ -10,13 +10,13 @@ from qsb_capture.storage import SegmentArchive,Config,MiB
 from qsb_capture.dashboard import export_day
 
 
-def make_demo(output):
+def make_demo_day(output, date):
     with tempfile.TemporaryDirectory() as tmp:
         archive=SegmentArchive(Path(tmp)/'capture',Config(storage_bytes=32*MiB,segment_bytes=2*MiB,max_response_bytes=128*1024,min_free_bytes=0))
         def meta(ident,kind='depth',symbol='DEMO-BOX',typ='QSB',minute=0,status=200):
-            stamp=f'2026-10-29T{12+minute//60:02}:{minute%60:02}:00+00:00'
+            stamp=f'{date}T{12+minute//60:02}:{minute%60:02}:00+00:00'
             return dict(id=ident,sweep='synthetic',kind=kind,symbol=symbol,type=typ,started_at=stamp,finished_at=stamp,status=status)
-        reference={'currentTradingDate':'2026-10-29','data':[]}
+        reference={'currentTradingDate':date,'data':[]}
         for typ,symbol,subtype in [('QSB','DEMO-BOX','BOX_SPREAD'),('CPM','DEMO-CONDOR','IRON_CONDOR')]:
             expiry='2026-10-30' if typ=='QSB' else '2026-11-06'
             osi_date='261030' if typ=='QSB' else '261106'
@@ -31,6 +31,12 @@ def make_demo(output):
                 data={'data':{'bids':[] if empty else [[3+(i%4),f'{10+i%5/10:.4f}',''],[8,'9.8000','']], 'asks':[] if empty else [[2,f'{10.6+i%5/10:.4f}','']], 'trades':[['09:48:04.592403710',2,'10.1000'],['09:48:04.592403710',2,'10.1000']], 'timestamp':f'{9+(i*5)//60:02}:{i*5%60:02}:00'}}
                 archive.save(m,json.dumps(data).encode())
         archive.close()
-        export_day(list((Path(tmp)/'capture/segments').glob('*.sealed.sqlite3')),output,'2026-10-29',as_of=dt.datetime(2026,10,30,tzinfo=dt.timezone.utc),min_free_bytes=0,compressed=False)
+        export_day(list((Path(tmp)/'capture/segments').glob('*.sealed.sqlite3')),output,date,as_of=dt.datetime(2026,10,30,tzinfo=dt.timezone.utc),min_free_bytes=0,compressed=False)
+
+
+def make_demo(output):
+    # Consecutive collection days make date selection usable in the public demo.
+    for date in ('2026-10-27', '2026-10-28', '2026-10-29'):
+        make_demo_day(output, date)
 
 if __name__=='__main__':make_demo(Path(sys.argv[1] if len(sys.argv)>1 else 'dashboard/public/demo-data'))
