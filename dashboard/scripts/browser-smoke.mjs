@@ -15,6 +15,17 @@ try {
     .waitFor();
   await page.getByText("Quoted book", { exact: true }).waitFor();
   await page.getByLabel("Collection date · Eastern Time").waitFor();
+  for (const day of [28, 27, 29]) {
+    await page.getByRole("button", { name: /Collection date/ }).click();
+    await page
+      .getByRole("dialog", { name: "Choose collection date" })
+      .getByRole("button", { name: new RegExp(`October ${day}th`) })
+      .click();
+    await page
+      .getByText(new RegExp(`Eastern collection date 2026-10-${day}`))
+      .waitFor();
+    await page.getByText("Quoted book", { exact: true }).waitFor();
+  }
   await page.getByText("08:00:00 EDT", { exact: true }).waitFor();
   assert.ok(await page.locator(".session-regular").count());
   assert.ok(await page.locator(".session-extended").count());
@@ -86,7 +97,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "ok browser: strategy/expiry filters and reset, Eastern times, session shading, leg search, replay, responsive layout, no runtime errors",
+    "ok browser: demo date selection, strategy/expiry filters and reset, Eastern times, session shading, leg search, replay, responsive layout, no runtime errors",
   );
 } finally {
   await browser.close();

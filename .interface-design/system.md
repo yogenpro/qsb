@@ -88,6 +88,14 @@ a 3px teal left rule; the definition panel repeats the 3px teal top rule.
   side/ratio, root/strike, and expiry. Expose selection with `aria-pressed`.
 - **Filters:** book segments, text search, strategy and expiration selects.
   Strategy and expiration share a two-column grid where space permits.
+- **Collection date:** DayPicker calendar in a Radix popover, aligned to the date
+  button. Use the existing inset control, white panel, teal selection and focus
+  tokens. Calendar cells are 44px (40px wide at 360px and below), with 12px panel
+  padding. Month/year dropdowns use the same native select styling as instrument
+  filters: inset fill, 1px rule, 6px radius, 44px height and regular-weight text.
+  Month/year dropdowns and arrow-key navigation select available Eastern
+  collection dates; other dates are disabled. Close on selection or Escape and
+  return focus to the trigger.
 - **Replay:** collection clock and published source clock remain distinct;
   labeled status badge; dark play/pause action; native range input; previous/next
   controls; numeric observation counter.
